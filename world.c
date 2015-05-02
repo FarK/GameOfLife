@@ -109,15 +109,15 @@ void deleteCell(struct Cell *cell, struct World *world)
 	world->grid[cell->x][cell->y] = NULL;
 }
 
-inline struct Cell *getCell(wsize_t x, wsize_t y, struct World *world)
-{
-	return world->grid[x][y];
-}
-
 inline void setCellPos(wsize_t x, wsize_t y, struct Cell *cell)
 {
 	cell->x = x;
 	cell->y = y;
+}
+
+inline struct Cell *getCell(wsize_t x, wsize_t y, struct World *world)
+{
+	return world->grid[x][y];
 }
 
 inline void getSize(wsize_t *x, wsize_t *y, const struct World *world)
