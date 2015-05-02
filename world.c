@@ -10,11 +10,11 @@ struct World {
 	wsize_t x;
 	wsize_t y;
 
-	bool **grid;
-	struct list_head cells;
+	struct Cell ***grid;
+	struct list_head monitoredCells;
 };
 
-struct AliveCell {
+struct Cell {
 	struct list_head lh;
 	wsize_t x;
 	wsize_t y;
@@ -24,72 +24,100 @@ struct AliveCell {
 struct World *createWorld(wsize_t x, wsize_t y)
 {
 	struct World *world;
-	bool *grid;
-	wsize_t i;
+	struct Cell **grid;
+	wsize_t i, j;
 
 	// Allocate memory
 	world = (struct World *) malloc(sizeof(struct World));
-	world->grid = (bool **)malloc(x * sizeof(bool *));
-	grid = (bool *)malloc(x * y * sizeof(bool));
+	world->grid = (struct Cell ***)malloc(x * sizeof(struct Cell *));
+	grid = (struct Cell **)malloc(x * y * sizeof(struct Cell *));
 
 	// Initialize pointers
-	for (i = 0; i < x; ++i)
+	for (i = 0; i < x; ++i) {
 		world->grid[i] = &grid[i];
+		for (j = 0; j < y; ++j)
+			world->grid[i][j] = NULL;
+	}
 
 	// Initialize struct
 	world->x = x;
 	world->y = y;
-	INIT_LIST_HEAD(&world->cells);
+	INIT_LIST_HEAD(&world->monitoredCells);
 
 	return world;
 }
 
 inline void destroyWorld(struct World *world)
 {
-	struct AliveCell *counter, *tmp;
+	struct Cell *cell, *tmp;
 
-	list_for_each_entry_safe(counter, tmp, &world->cells, lh)
+	list_for_each_entry_safe(cell, tmp, &world->monitoredCells, lh)
+		deleteCell(cell, world);
+	free(world->grid[0]);
 	free(world->grid);
 	free(world);
 }
 
 inline void clearWorld(struct World *world)
 {
-	memset(world->grid[0], 0, world->x * world->y);
+	wsize_t i, j;
+
+	for (i = 0; i < world->x; ++i) {
+		for (j = 0; j < world->y; ++j) {
+			if (world->grid[i][j] != NULL)
+				deleteCell(world->grid[i][j], world);
+		}
+	}
 }
 
-inline bool getGridCell(wsize_t x, wsize_t y, const struct World *world)
+void addCell(struct Cell *cell, struct World *world)
+{
+	list_add(&cell->lh, &world->monitoredCells);
+	world->grid[cell->x][cell->y] = cell;
+}
+
+struct Cell *addNewCell(wsize_t x, wsize_t y, struct World *world)
+{
+	struct Cell *cell;
+
+	if (world->grid[x][y] == NULL) {
+		cell = (struct Cell *)malloc(sizeof(struct Cell));
+		cell->x = x;
+		cell->y = y;
+
+		world->grid[x][y] = cell;
+		addCell(cell, world);
+	}
+	else
+		cell = world->grid[x][y];
+
+	return cell;
+}
+
+struct Cell *rmCell(struct Cell *cell, struct World *world)
+{
+	list_del(&cell->lh);
+	world->grid[cell->x][cell->y] = NULL;
+
+	return cell;
+}
+
+void deleteCell(struct Cell *cell, struct World *world)
+{
+	list_del(&cell->lh);
+	free(cell);
+	world->grid[cell->x][cell->y] = NULL;
+}
+
+inline struct Cell *getCell(wsize_t x, wsize_t y, struct World *world)
 {
 	return world->grid[x][y];
 }
 
-inline void setGridCell(wsize_t x, wsize_t y, bool state, struct World *world)
+inline void setCellPos(wsize_t x, wsize_t y, struct Cell *cell)
 {
-	world->grid[x][y] = state;
-}
-
-void addAliveCell(struct AliveCell *cell, struct World *world)
-{
-	list_add(&cell->lh, &world->cells);
-}
-
-void addNewAliveCell(wsize_t x, wsize_t y, struct World *world)
-{
-	struct AliveCell *cell;
-
-	if (world->grid[x][y] != true) {
-		world->grid[x][y] = true;
-		cell = (struct AliveCell *)malloc(sizeof(struct AliveCell));
-		cell->x = x;
-		cell->y = y;
-		addAliveCell(cell, world);
-	}
-}
-
-void rmAliveCell(struct AliveCell *cell, struct World *world)
-{
-	list_del(&cell->lh);
-	world->grid[cell->x][cell->y] = false;
+	cell->x = x;
+	cell->y = y;
 }
 
 inline void getSize(wsize_t *x, wsize_t *y, const struct World *world)
