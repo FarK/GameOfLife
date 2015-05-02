@@ -10,9 +10,9 @@ int main(int nargs, char *argv[])
 	clearWorld(world);
 	printf("Mundo inicializado\n");
 
-	setCell(4, 4, true, world);
-	printf("Mundo setCell\n");
-	printf("Cell[4,4] = %d\n", getCell(4, 4, world));
+	printf("Añadiendo célula\n");
+	addNewAliveCell(4, 4, world);
+	printf("Cell[4,4] = %d\n", getGridCell(4, 4, world));
 
 	destroyWorld(world);
 }
