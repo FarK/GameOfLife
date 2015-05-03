@@ -14,13 +14,11 @@ void clearWorld(struct World *world);
 
 void getSize(wsize_t *x, wsize_t *y, const struct World *world);
 
-void addCell(struct Cell *cell, struct World *world);
-struct Cell *addNewCell(wsize_t x, wsize_t y, struct World *world);
+struct Cell *addNewAliveCell(wsize_t x, wsize_t y, struct World *world);
 struct Cell *rmCell(struct Cell *cell, struct World *world);
 void deleteCell(struct Cell *cell, struct World *world);
-struct Cell *getCell(wsize_t x, wsize_t y, struct World *world);
-void getCellPos(wsize_t *x, wsize_t *y, struct Cell *cell);
-void setCellPos(wsize_t x, wsize_t y, struct Cell *cell);
+struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world);
+void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell);
 
 struct Cell *wit_first(struct World *world);
 bool wit_done(struct Cell *cell, struct World *world);

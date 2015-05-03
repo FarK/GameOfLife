@@ -110,26 +110,21 @@ struct Cell *rmCell(struct Cell *cell, struct World *world)
 	return cell;
 }
 
-void deleteCell(struct Cell *cell, struct World *world)
+static void deleteCell(struct Cell *cell, struct World *world)
 {
 	list_del(&cell->lh);
 	free(cell);
 	world->grid[cell->x][cell->y] = NULL;
 }
 
-inline void setCellPos(wsize_t x, wsize_t y, struct Cell *cell)
-{
-	cell->x = x;
-	cell->y = y;
-}
 
-inline void getCellPos(wsize_t *x, wsize_t *y, struct Cell *cell)
+inline void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell)
 {
 	*x = cell->x;
 	*y = cell->y;
 }
 
-inline struct Cell *getCell(wsize_t x, wsize_t y, struct World *world)
+inline struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world)
 {
 	return world->grid[x][y];
 }
