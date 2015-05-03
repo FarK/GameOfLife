@@ -123,15 +123,28 @@ inline void setCellPos(wsize_t x, wsize_t y, struct Cell *cell)
 	cell->y = y;
 }
 
+inline void getCellPos(wsize_t *x, wsize_t *y, struct Cell *cell)
+{
+	*x = cell->x;
+	*y = cell->y;
+}
+
 inline struct Cell *getCell(wsize_t x, wsize_t y, struct World *world)
 {
 	return world->grid[x][y];
 }
 
-inline void getSize(wsize_t *x, wsize_t *y, const struct World *world)
+inline struct Cell *wit_first(struct World *world)
 {
-	*x = world->x;
-	*y = world->y;
+	return list_entry(world->monitoredCells.next, struct Cell, lh);
+}
 
-	return;
+inline bool wit_done(struct Cell *cell, struct World *world)
+{
+	return &cell->lh != &world->monitoredCells;
+}
+
+inline struct Cell *wit_next(struct Cell *cell)
+{
+	return list_entry(cell->lh.next, struct Cell, lh);
 }

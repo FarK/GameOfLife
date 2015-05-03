@@ -22,4 +22,8 @@ struct Cell *getCell(wsize_t x, wsize_t y, struct World *world);
 void getCellPos(wsize_t *x, wsize_t *y, struct Cell *cell);
 void setCellPos(wsize_t x, wsize_t y, struct Cell *cell);
 
+struct Cell *wit_first(struct World *world);
+bool wit_done(struct Cell *cell, struct World *world);
+struct Cell *wit_next(struct Cell *cell);
+
 #endif
