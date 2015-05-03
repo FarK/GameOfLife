@@ -34,7 +34,7 @@ struct World *createWorld(wsize_t x, wsize_t y)
 
 	// Initialize pointers
 	for (i = 0; i < x; ++i) {
-		world->grid[i] = &grid[i];
+		world->grid[i] = &grid[i*y];
 		for (j = 0; j < y; ++j)
 			world->grid[i][j] = NULL;
 	}
