@@ -16,8 +16,11 @@ struct World {
 
 struct Cell {
 	struct list_head lh;
+
 	wsize_t x;
 	wsize_t y;
+	unsigned char num_ref;
+	unsigned char state;
 };
 
 

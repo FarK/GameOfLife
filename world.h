@@ -4,7 +4,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef unsigned long wsize_t;
+#define CS_DEAD   0
+#define CS_ALIVE  (1>>0)
+#define CS_NEW    (1>>1)
+
+typedef long int wsize_t;
 struct World;
 struct Cell;
 
