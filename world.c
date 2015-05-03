@@ -70,6 +70,14 @@ inline void clearWorld(struct World *world)
 	}
 }
 
+inline void getSize(wsize_t *x, wsize_t *y, const struct World *world)
+{
+	*x = world->x;
+	*y = world->y;
+
+	return;
+}
+
 void addCell(struct Cell *cell, struct World *world)
 {
 	list_add(&cell->lh, &world->monitoredCells);

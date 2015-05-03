@@ -19,6 +19,7 @@ struct Cell *addNewCell(wsize_t x, wsize_t y, struct World *world);
 struct Cell *rmCell(struct Cell *cell, struct World *world);
 void deleteCell(struct Cell *cell, struct World *world);
 struct Cell *getCell(wsize_t x, wsize_t y, struct World *world);
+void getCellPos(wsize_t *x, wsize_t *y, struct Cell *cell);
 void setCellPos(wsize_t x, wsize_t y, struct Cell *cell);
 
 #endif
