@@ -23,6 +23,9 @@ struct Cell {
 	unsigned char state;
 };
 
+// Auxiliary functions
+static struct Cell *newCell(wsize_t x, wsize_t y, unsigned char num_ref,
+	unsigned char state);
 
 struct World *createWorld(wsize_t x, wsize_t y)
 {
@@ -79,6 +82,20 @@ inline void getSize(wsize_t *x, wsize_t *y, const struct World *world)
 	*y = world->y;
 
 	return;
+}
+
+inline static struct Cell *newCell(wsize_t x, wsize_t y, unsigned char num_ref,
+	unsigned char state)
+{
+	struct Cell *cell;
+
+	cell = (struct Cell *)malloc(sizeof(struct Cell));
+	cell->x = x;
+	cell->y = y;
+	cell->num_ref = num_ref;
+	cell->state = state;
+
+	return cell;
 }
 
 void addCell(struct Cell *cell, struct World *world)
