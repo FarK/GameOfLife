@@ -26,6 +26,7 @@ struct Cell {
 // Auxiliary functions
 static struct Cell *newCell(wsize_t x, wsize_t y, unsigned char num_ref,
 	unsigned char state);
+static void addCell(struct Cell *cell, struct World *world);
 
 struct World *createWorld(wsize_t x, wsize_t y)
 {
@@ -98,7 +99,7 @@ inline static struct Cell *newCell(wsize_t x, wsize_t y, unsigned char num_ref,
 	return cell;
 }
 
-void addCell(struct Cell *cell, struct World *world)
+static void addCell(struct Cell *cell, struct World *world)
 {
 	list_add(&cell->lh, &world->monitoredCells);
 	world->grid[cell->x][cell->y] = cell;
