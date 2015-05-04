@@ -6,41 +6,40 @@ void printCells(struct World *world);
 int main(int nargs, char *argv[])
 {
 	struct World *world = NULL;
-	struct Cell *cell = NULL;
 
 	world = createWorld(50, 50);
 	printf("Mundo creado = %p\n", world);
 
-	printf("Añadiendo célula\n");
-	cell = addNewCell(4, 4, world);
-	printf("Cell[4,4] = %s\n",
-		getCell(4, 4, world) != NULL? "alive" : "dead");
-	printf("Cell[1,1] = %s\n",
-		getCell(1, 1, world) != NULL? "alive" : "dead");
+	printf("Añadiendo células\n");
 
-	cell = rmCell(cell, world);
-	printf("Cell[4,4] = %s\n",
-		getCell(4, 4, world) != NULL? "alive" : "dead");
+	addNewAliveCell(1, 1, world);
+	addNewAliveCell(-1, 1, world);
+	printf("Dos células:\n");
+	printCells(world);
 
-	setCellPos(1, 1, cell);
-	addCell(cell, world);
-	printf("Cell[1,1] = %s\n",
-		getCell(1, 1, world) != NULL? "alive" : "dead");
+	rmCell(getCell(1, 1, world), world);
+	printf("\nUna célula:\n");
+	printCells(world);
+	rmCell(getCell(-1, 1, world), world);
+	printf("\nNinguna célula:\n");
+	printCells(world);
 
+	addNewAliveCell(1, 2, world);
+	addNewAliveCell(1, 3, world);
+	addNewAliveCell(1, 3, world);
+	addNewAliveCell(2, 1, world);
 
-	addNewCell(1, 2, world);
-	addNewCell(1, 3, world);
-	addNewCell(1, 3, world);
-	addNewCell(2, 1, world);
-	addNewCell(2, 2, world);
-	addNewCell(2, 3, world);
-	addNewCell(4, 3, world);
-	addNewCell(9, 9, world);
-
+	printf("\nMuchas células:\n");
 	printCells(world);
 
 	clearWorld(world);
 	printf("Mundo borrado: \n");
+	printCells(world);
+
+	addNewAliveCell(2, 2, world);
+	addNewAliveCell(2, 3, world);
+	addNewAliveCell(4, 3, world);
+	addNewAliveCell(9, 9, world);
 
 	destroyWorld(world);
 
@@ -58,6 +57,6 @@ void printCells(struct World *world)
 	     cell = wit_next(cell))
 	{
 		getCellPos(&x, &y, cell);
-		printf("%d - (%lu, %lu)\n", i++, x, y);
+		printf("%d - (%lu, %lu) = %02X\n", i++, x, y, getCellState(cell));
 	}
 }
