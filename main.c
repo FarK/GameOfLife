@@ -50,13 +50,14 @@ void printCells(struct World *world)
 {
 	int i = 0;
 	wsize_t x, y;
-	struct Cell *cell;
+	struct Cell *cell, *tmp = NULL;
 
-	for (cell = wit_first(world);
+	for (cell = wit_first_safe(world, &tmp);
 	     wit_done(cell, world);
-	     cell = wit_next(cell))
+	     cell = wit_next_safe(&tmp))
 	{
 		getCellPos(&x, &y, cell);
-		printf("%d - (%lu, %lu) = %02X\n", i++, x, y, getCellState(cell));
+		printf("%d - (%lu, %lu) = %02X\n",
+			i++, x, y, getCellState(cell));
 	}
 }

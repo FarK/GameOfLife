@@ -23,9 +23,13 @@ struct Cell *rmCell(struct Cell *cell, struct World *world);
 struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world);
 void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell);
 unsigned char getCellState(const struct Cell *cell);
+void reviveCell(struct Cell *cell, struct World *world);
+void killCell(struct Cell *cell, struct World *world);
 
 struct Cell *wit_first(struct World *world);
+struct Cell *wit_first_safe(struct World *world, struct Cell **tmp);
 bool wit_done(struct Cell *cell, struct World *world);
 struct Cell *wit_next(struct Cell *cell);
+struct Cell *wit_next_safe(struct Cell **tmp);
 
 #endif

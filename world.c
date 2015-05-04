@@ -31,6 +31,8 @@ static void addAliveCell(struct Cell *cell, struct World *world);
 static void addNewDeadCell(wsize_t x, wsize_t y, struct World *world);
 static void deleteCell(struct Cell *cell, struct World *world);
 static void rmDeadCell(wsize_t x, wsize_t y, struct World *world);
+static void addNeighbor(wsize_t x, wsize_t y, struct World *world);
+static void rmNeighbor(wsize_t x, wsize_t y, struct World *world);
 static void checkLimits(wsize_t *x, wsize_t *y, const struct World *world);
 
 struct World *createWorld(wsize_t x, wsize_t y)
@@ -126,13 +128,8 @@ inline static void addNewDeadCell(wsize_t x, wsize_t y, struct World *world)
 	}
 }
 
-inline static void addAliveCell(struct Cell *cell, struct World *world)
+static void addNeighbor(wsize_t x, wsize_t y, struct World *world)
 {
-	wsize_t x = cell->x;
-	wsize_t y = cell->y;
-
-	addCell(cell, world);
-
 	addNewDeadCell(x, y-1, world);
 	addNewDeadCell(x, y+1, world);
 	addNewDeadCell(x-1, y, world);
@@ -141,6 +138,27 @@ inline static void addAliveCell(struct Cell *cell, struct World *world)
 	addNewDeadCell(x+1, y, world);
 	addNewDeadCell(x+1, y-1, world);
 	addNewDeadCell(x+1, y+1, world);
+}
+
+static void rmNeighbor(wsize_t x, wsize_t y, struct World *world)
+{
+	rmDeadCell(x, y-1, world);
+	rmDeadCell(x, y+1, world);
+	rmDeadCell(x-1, y, world);
+	rmDeadCell(x-1, y-1, world);
+	rmDeadCell(x-1, y+1, world);
+	rmDeadCell(x+1, y, world);
+	rmDeadCell(x+1, y-1, world);
+	rmDeadCell(x+1, y+1, world);
+}
+
+inline static void addAliveCell(struct Cell *cell, struct World *world)
+{
+	wsize_t x = cell->x;
+	wsize_t y = cell->y;
+
+	addCell(cell, world);
+	addNeighbor(x, y, world);
 }
 
 struct Cell *addNewAliveCell(wsize_t x, wsize_t y, struct World *world)
@@ -177,15 +195,7 @@ struct Cell *rmCell(struct Cell *cell, struct World *world)
 
 	if (cell->state & CS_ALIVE) {
 		deleteCell(cell, world);
-
-		rmDeadCell(x, y-1, world);
-		rmDeadCell(x, y+1, world);
-		rmDeadCell(x-1, y, world);
-		rmDeadCell(x-1, y-1, world);
-		rmDeadCell(x-1, y+1, world);
-		rmDeadCell(x+1, y, world);
-		rmDeadCell(x+1, y-1, world);
-		rmDeadCell(x+1, y+1, world);
+		rmNeighbor(x, y, world);
 	}
 	else if (cell->state & CS_DEAD) {
 		rmDeadCell(cell->x, cell->y, world);
@@ -216,6 +226,18 @@ inline void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell)
 	*y = cell->y;
 }
 
+inline void reviveCell(struct Cell *cell, struct World *world)
+{
+	cell->state = CS_NEW | CS_ALIVE;
+	addNeighbor(cell->x, cell->y, world);
+}
+
+inline void killCell(struct Cell *cell, struct World *world)
+{
+	cell->state = CS_NEW | CS_DEAD;
+	rmNeighbor(cell->x, cell->y, world);
+}
+
 inline unsigned char getCellState(const struct Cell *cell)
 {
 	return cell->state;
@@ -232,6 +254,16 @@ inline struct Cell *wit_first(struct World *world)
 	return list_entry(world->monitoredCells.next, struct Cell, lh);
 }
 
+inline struct Cell *wit_first_safe(struct World *world, struct Cell **tmp)
+{
+	struct Cell *cell;
+
+	cell = list_entry(world->monitoredCells.next, struct Cell, lh);
+	*tmp = list_entry(cell->lh.next, struct Cell, lh);
+
+	return cell;
+}
+
 inline bool wit_done(struct Cell *cell, struct World *world)
 {
 	return &cell->lh != &world->monitoredCells;
@@ -240,4 +272,14 @@ inline bool wit_done(struct Cell *cell, struct World *world)
 inline struct Cell *wit_next(struct Cell *cell)
 {
 	return list_entry(cell->lh.next, struct Cell, lh);
+}
+
+inline struct Cell *wit_next_safe(struct Cell **tmp)
+{
+	struct Cell *cell;
+
+	cell = *tmp;
+	*tmp = list_entry((*tmp)->lh.next, struct Cell, lh);
+
+	return cell;
 }
