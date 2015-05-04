@@ -143,7 +143,7 @@ inline static void addAliveCell(struct Cell *cell, struct World *world)
 	addNewDeadCell(x+1, y+1, world);
 }
 
-struct Cell *addNewCell(wsize_t x, wsize_t y, struct World *world)
+struct Cell *addNewAliveCell(wsize_t x, wsize_t y, struct World *world)
 {
 	struct Cell *cell;
 
