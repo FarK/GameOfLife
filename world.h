@@ -4,9 +4,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define CS_DEAD   0
-#define CS_ALIVE  (1>>0)
-#define CS_NEW    (1>>1)
+#define CS_DEAD   (1<<0)
+#define CS_ALIVE  (1<<1)
+#define CS_NEW    (1<<2)
 
 typedef long int wsize_t;
 struct World;
@@ -18,13 +18,14 @@ void clearWorld(struct World *world);
 
 void getSize(wsize_t *x, wsize_t *y, const struct World *world);
 
-struct Cell *addNewAliveCell(wsize_t x, wsize_t y, struct World *world);
-struct Cell *rmCell(struct Cell *cell, struct World *world);
+struct Cell *reviveCell(wsize_t x, wsize_t y, struct World *world);
+struct Cell *killCell(struct Cell *cell, struct World *world);
 struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world);
 void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell);
 unsigned char getCellState(const struct Cell *cell);
-void reviveCell(struct Cell *cell, struct World *world);
-void killCell(struct Cell *cell, struct World *world);
+unsigned char getCellState_coord(wsize_t x, wsize_t y,
+	const struct World *world);
+void commit(struct World *world);
 
 struct Cell *wit_first(struct World *world);
 struct Cell *wit_first_safe(struct World *world, struct Cell **tmp);

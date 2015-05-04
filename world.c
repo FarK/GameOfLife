@@ -19,7 +19,7 @@ struct Cell {
 
 	wsize_t x;
 	wsize_t y;
-	unsigned char num_ref;
+	char num_ref;
 	unsigned char state;
 };
 
@@ -27,10 +27,7 @@ struct Cell {
 static struct Cell *newCell(wsize_t x, wsize_t y, unsigned char num_ref,
 	unsigned char state);
 static void addCell(struct Cell *cell, struct World *world);
-static void addAliveCell(struct Cell *cell, struct World *world);
-static void addNewDeadCell(wsize_t x, wsize_t y, struct World *world);
 static void deleteCell(struct Cell *cell, struct World *world);
-static void rmDeadCell(wsize_t x, wsize_t y, struct World *world);
 static void addNeighbor(wsize_t x, wsize_t y, struct World *world);
 static void rmNeighbor(wsize_t x, wsize_t y, struct World *world);
 static void checkLimits(wsize_t *x, wsize_t *y, const struct World *world);
@@ -112,94 +109,91 @@ static void addCell(struct Cell *cell, struct World *world)
 	world->grid[cell->x][cell->y] = cell;
 }
 
-inline static void addNewDeadCell(wsize_t x, wsize_t y, struct World *world)
+inline static void incRef(wsize_t x, wsize_t y, struct World *world)
 {
 	struct Cell *cell;
 
 	checkLimits(&x, &y, world);
 
-	if (world->grid[x][y] != NULL) {
+	if (world->grid[x][y] != NULL)
 		++(world->grid[x][y]->num_ref);
-		cell = world->grid[x][y];
-	}
 	else {
 		cell = newCell(x, y, 1, CS_NEW | CS_DEAD);
 		addCell(cell, world);
 	}
 }
 
-static void addNeighbor(wsize_t x, wsize_t y, struct World *world)
-{
-	addNewDeadCell(x, y-1, world);
-	addNewDeadCell(x, y+1, world);
-	addNewDeadCell(x-1, y, world);
-	addNewDeadCell(x-1, y-1, world);
-	addNewDeadCell(x-1, y+1, world);
-	addNewDeadCell(x+1, y, world);
-	addNewDeadCell(x+1, y-1, world);
-	addNewDeadCell(x+1, y+1, world);
-}
-
-static void rmNeighbor(wsize_t x, wsize_t y, struct World *world)
-{
-	rmDeadCell(x, y-1, world);
-	rmDeadCell(x, y+1, world);
-	rmDeadCell(x-1, y, world);
-	rmDeadCell(x-1, y-1, world);
-	rmDeadCell(x-1, y+1, world);
-	rmDeadCell(x+1, y, world);
-	rmDeadCell(x+1, y-1, world);
-	rmDeadCell(x+1, y+1, world);
-}
-
-inline static void addAliveCell(struct Cell *cell, struct World *world)
-{
-	wsize_t x = cell->x;
-	wsize_t y = cell->y;
-
-	addCell(cell, world);
-	addNeighbor(x, y, world);
-}
-
-struct Cell *addNewAliveCell(wsize_t x, wsize_t y, struct World *world)
-{
-	struct Cell *cell;
-
-	checkLimits(&x, &y, world);
-
-	if (world->grid[x][y] == NULL) {
-		cell = newCell(x, y, 0, CS_NEW | CS_ALIVE);
-		addAliveCell(cell, world);
-	}
-	else
-		cell = world->grid[x][y];
-
-	return cell;
-}
-
-inline void rmDeadCell(wsize_t x, wsize_t y, struct World *world)
+inline void decRef(wsize_t x, wsize_t y, struct World *world)
 {
 	struct Cell *cell;
 
 	checkLimits(&x, &y, world);
 	cell = world->grid[x][y];
 
-	if (cell != NULL && --(cell->num_ref) == 0)
-		deleteCell(cell, world);
+	if (cell != NULL && (cell->state & CS_DEAD)) {
+		if (--(cell->num_ref) <= 0)
+			deleteCell(cell, world);
+	}
 }
 
-struct Cell *rmCell(struct Cell *cell, struct World *world)
+static void addNeighbor(wsize_t x, wsize_t y, struct World *world)
+{
+	incRef(x, y-1, world);
+	incRef(x, y+1, world);
+	incRef(x-1, y, world);
+	incRef(x-1, y-1, world);
+	incRef(x-1, y+1, world);
+	incRef(x+1, y, world);
+	incRef(x+1, y-1, world);
+	incRef(x+1, y+1, world);
+}
+
+static void rmNeighbor(wsize_t x, wsize_t y, struct World *world)
+{
+	decRef(x, y-1, world);
+	decRef(x, y+1, world);
+	decRef(x-1, y, world);
+	decRef(x-1, y-1, world);
+	decRef(x-1, y+1, world);
+	decRef(x+1, y, world);
+	decRef(x+1, y-1, world);
+	decRef(x+1, y+1, world);
+}
+
+struct Cell *reviveCell(wsize_t x, wsize_t y, struct World *world)
+{
+	struct Cell *cell;
+
+	checkLimits(&x, &y, world);
+	cell = world->grid[x][y];
+
+	if (cell == NULL) {
+		cell = newCell(x, y, 0, CS_NEW | CS_ALIVE);
+		addCell(cell, world);
+		addNeighbor(x, y, world);
+	}
+	else if (cell->state & CS_DEAD) {
+		addNeighbor(x, y, world);
+		cell->state = CS_NEW | CS_ALIVE;
+	}
+
+	return cell;
+}
+
+struct Cell *killCell(struct Cell *cell, struct World *world)
 {
 	wsize_t x = cell->x;
 	wsize_t y = cell->y;
 
+	checkLimits(&x, &y, world);
+
 	if (cell->state & CS_ALIVE) {
-		deleteCell(cell, world);
 		rmNeighbor(x, y, world);
+		cell->state = CS_NEW | CS_DEAD;
 	}
-	else if (cell->state & CS_DEAD) {
-		rmDeadCell(cell->x, cell->y, world);
-	}
+
+	if (--(cell->num_ref) <= 0)
+		deleteCell(cell, world);
 
 	return cell;
 }
@@ -226,27 +220,33 @@ inline void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell)
 	*y = cell->y;
 }
 
-inline void reviveCell(struct Cell *cell, struct World *world)
-{
-	cell->state = CS_NEW | CS_ALIVE;
-	addNeighbor(cell->x, cell->y, world);
-}
-
-inline void killCell(struct Cell *cell, struct World *world)
-{
-	cell->state = CS_NEW | CS_DEAD;
-	rmNeighbor(cell->x, cell->y, world);
-}
-
 inline unsigned char getCellState(const struct Cell *cell)
 {
 	return cell->state;
+}
+
+inline unsigned char getCellState_coord(wsize_t x, wsize_t y,
+	const struct World *world)
+{
+	struct Cell *cell;
+
+	checkLimits(&x, &y, world);
+	cell = world->grid[x][y];
+
+	return cell == NULL? CS_DEAD : cell->state;
 }
 
 inline struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world)
 {
 	checkLimits(&x, &y, world);
 	return world->grid[x][y];
+}
+
+void commit(struct World *world)
+{
+	struct Cell *cell;
+	list_for_each_entry(cell, &world->monitoredCells, lh)
+		cell->state &= ~CS_NEW;
 }
 
 inline struct Cell *wit_first(struct World *world)
