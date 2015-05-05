@@ -62,8 +62,10 @@ inline void destroyWorld(struct World *world)
 {
 	struct Cell *cell, *tmp;
 
-	list_for_each_entry_safe(cell, tmp, &world->monitoredCells, lh)
-		deleteCell(cell, world);
+	list_for_each_entry_safe(cell, tmp, &world->monitoredCells, lh) {
+		list_del(&cell->lh);
+		free(cell);
+	}
 	free(world->grid[0]);
 	free(world->grid);
 	free(world);
