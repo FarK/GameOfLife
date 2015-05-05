@@ -181,6 +181,14 @@ struct Cell *reviveCell(wsize_t x, wsize_t y, struct World *world)
 	return cell;
 }
 
+void reviveCells(struct list_head *list, struct World *world)
+{
+	struct CellListNode *cln;
+
+	list_for_each_entry(cln, list, lh)
+		reviveCell(cln->cell->x, cln->cell->y, world);
+}
+
 struct Cell *killCell(struct Cell *cell, struct World *world)
 {
 	wsize_t x = cell->x;
@@ -197,6 +205,14 @@ struct Cell *killCell(struct Cell *cell, struct World *world)
 		deleteCell(cell, world);
 
 	return cell;
+}
+
+void killCells(struct list_head *list, struct World *world)
+{
+	struct CellListNode *cln;
+
+	list_for_each_entry(cln, list, lh)
+		killCell(cln->cell, world);
 }
 
 static void deleteCell(struct Cell *cell, struct World *world)
@@ -241,6 +257,25 @@ inline struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world)
 {
 	checkLimits(&x, &y, world);
 	return world->grid[x][y];
+}
+
+void addToList(struct Cell *cell, struct list_head *list)
+{
+	struct CellListNode *cellList;
+
+	cellList = (struct CellListNode *)malloc(sizeof(struct CellListNode));
+	cellList->cell = cell;
+	list_add(&cellList->lh, list);
+}
+
+void freeList(struct list_head *list)
+{
+	struct CellListNode *cellList, *tmp;
+
+	list_for_each_entry_safe(cellList, tmp, list, lh) {
+		list_del(&cellList->lh);
+		free(cellList);
+	}
 }
 
 inline struct Cell *wit_first(struct World *world)
