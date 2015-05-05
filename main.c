@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "world.h"
+#include "gol.h"
 
 void printCells(struct World *world);
 
@@ -12,22 +13,22 @@ int main(int nargs, char *argv[])
 
 	printf("Añadiendo células\n");
 
-	addNewAliveCell(1, 1, world);
-	addNewAliveCell(-1, 1, world);
+	reviveCell(1, 1, world);
+	reviveCell(-1, 1, world);
 	printf("Dos células:\n");
 	printCells(world);
 
-	rmCell(getCell(1, 1, world), world);
+	killCell(getCell(1, 1, world), world);
 	printf("\nUna célula:\n");
 	printCells(world);
-	rmCell(getCell(-1, 1, world), world);
+	killCell(getCell(-1, 1, world), world);
 	printf("\nNinguna célula:\n");
 	printCells(world);
 
-	addNewAliveCell(1, 2, world);
-	addNewAliveCell(1, 3, world);
-	addNewAliveCell(1, 3, world);
-	addNewAliveCell(2, 1, world);
+	reviveCell(1, 2, world);
+	reviveCell(1, 3, world);
+	reviveCell(1, 3, world);
+	reviveCell(2, 1, world);
 
 	printf("\nMuchas células:\n");
 	printCells(world);
@@ -36,10 +37,20 @@ int main(int nargs, char *argv[])
 	printf("Mundo borrado: \n");
 	printCells(world);
 
-	addNewAliveCell(2, 2, world);
-	addNewAliveCell(2, 3, world);
-	addNewAliveCell(4, 3, world);
-	addNewAliveCell(9, 9, world);
+	reviveCell(2, 2, world);
+	reviveCell(2, 3, world);
+	reviveCell(2, 4, world);
+
+	printf("Game of life:\n");
+	printCells(world);
+
+	printf("Iteration 1\n");
+	iteration(world, &rule_B3S23);
+	printCells(world);
+
+	printf("Iteration 2\n");
+	iteration(world, &rule_B3S23);
+	printCells(world);
 
 	destroyWorld(world);
 
@@ -58,6 +69,6 @@ void printCells(struct World *world)
 	{
 		getCellPos(&x, &y, cell);
 		printf("%d - (%lu, %lu) = %02X\n",
-			i++, x, y, getCellState(cell));
+			i++, x, y, isCellAlive(cell));
 	}
 }
