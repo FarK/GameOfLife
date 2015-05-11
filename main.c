@@ -8,6 +8,8 @@ int main(int nargs, char *argv[])
 {
 	struct World *world = NULL;
 
+	golInit(2);
+
 	world = createWorld(50, 50);
 	printf("Mundo creado = %p\n", world);
 
@@ -53,6 +55,7 @@ int main(int nargs, char *argv[])
 	printCells(world);
 
 	destroyWorld(world);
+	golEnd();
 
 	return 0;
 }
