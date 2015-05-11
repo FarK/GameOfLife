@@ -286,12 +286,12 @@ void freeList(struct list_head *list)
 	}
 }
 
-inline struct Cell *wit_first(struct World *world)
+inline struct Cell *wit_first(const struct World *world)
 {
 	return list_entry(world->monitoredCells.next, struct Cell, lh);
 }
 
-inline struct Cell *wit_first_safe(struct World *world, struct Cell **tmp)
+inline struct Cell *wit_first_safe(const struct World *world, struct Cell **tmp)
 {
 	struct Cell *cell;
 
@@ -302,7 +302,7 @@ inline struct Cell *wit_first_safe(struct World *world, struct Cell **tmp)
 }
 
 struct Cell *wit_first_split(unsigned int *count, unsigned int indx,
-	struct World *world)
+	const struct World *world)
 {
 	struct list_head *cell;
 	unsigned int i;
@@ -315,17 +315,17 @@ struct Cell *wit_first_split(unsigned int *count, unsigned int indx,
 	return list_entry(cell, struct Cell, lh);
 }
 
-inline bool wit_done(struct Cell *cell, struct World *world)
+inline bool wit_done(const struct Cell *cell, const struct World *world)
 {
 	return &cell->lh != &world->monitoredCells;
 }
 
-inline bool wit_done_split(unsigned int count, struct World *world)
+inline bool wit_done_split(unsigned int count, const struct World *world)
 {
 	return count < world->numMonCells;
 }
 
-inline struct Cell *wit_next(struct Cell *cell)
+inline struct Cell *wit_next(const struct Cell *cell)
 {
 	return list_entry(cell->lh.next, struct Cell, lh);
 }
@@ -340,7 +340,7 @@ inline struct Cell *wit_next_safe(struct Cell **tmp)
 	return cell;
 }
 
-inline struct Cell *wit_next_split(struct Cell *cell, unsigned int *count,
+inline struct Cell *wit_next_split(const struct Cell *cell, unsigned int *count,
 	unsigned int splits)
 {
 	struct list_head *nextCell;
