@@ -22,6 +22,8 @@ static const struct Rule rule_B3S23 = {
 	RULE_2 | RULE_3
 };
 
+void golInit(unsigned int numThreads);
+void golEnd();
 void iteration(struct World *world, const struct Rule *rule);
 
 #endif
