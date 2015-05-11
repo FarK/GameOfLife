@@ -12,6 +12,7 @@ struct World {
 
 	struct Cell ***grid;
 	struct list_head monitoredCells;
+	unsigned int numMonCells;
 };
 
 struct Cell {
@@ -54,6 +55,7 @@ struct World *createWorld(wsize_t x, wsize_t y)
 	world->x = x;
 	world->y = y;
 	INIT_LIST_HEAD(&world->monitoredCells);
+	world->numMonCells = 0;
 
 	return world;
 }
@@ -81,6 +83,8 @@ inline void clearWorld(struct World *world)
 				deleteCell(world->grid[i][j], world);
 		}
 	}
+
+	world->numMonCells = 0;
 }
 
 inline void getSize(wsize_t *x, wsize_t *y, const struct World *world)
@@ -109,6 +113,7 @@ static void addCell(struct Cell *cell, struct World *world)
 {
 	list_add(&cell->lh, &world->monitoredCells);
 	world->grid[cell->x][cell->y] = cell;
+	++(world->numMonCells);
 }
 
 inline static void incRef(wsize_t x, wsize_t y, struct World *world)
@@ -220,8 +225,9 @@ void killCells(struct list_head *list, struct World *world)
 static void deleteCell(struct Cell *cell, struct World *world)
 {
 	list_del(&cell->lh);
-	free(cell);
 	world->grid[cell->x][cell->y] = NULL;
+	free(cell);
+	--(world->numMonCells);
 }
 
 inline static void checkLimits(wsize_t *x, wsize_t *y,
@@ -295,9 +301,28 @@ inline struct Cell *wit_first_safe(struct World *world, struct Cell **tmp)
 	return cell;
 }
 
+struct Cell *wit_first_split(unsigned int *count, unsigned int indx,
+	struct World *world)
+{
+	struct list_head *cell;
+	unsigned int i;
+
+	*count = indx;
+	cell = world->monitoredCells.next;
+	for (i = 0; i < indx; ++i)
+		cell = cell->next;
+
+	return list_entry(cell, struct Cell, lh);
+}
+
 inline bool wit_done(struct Cell *cell, struct World *world)
 {
 	return &cell->lh != &world->monitoredCells;
+}
+
+inline bool wit_done_split(unsigned int count, struct World *world)
+{
+	return count < world->numMonCells;
 }
 
 inline struct Cell *wit_next(struct Cell *cell)
@@ -313,4 +338,18 @@ inline struct Cell *wit_next_safe(struct Cell **tmp)
 	*tmp = list_entry((*tmp)->lh.next, struct Cell, lh);
 
 	return cell;
+}
+
+inline struct Cell *wit_next_split(struct Cell *cell, unsigned int *count,
+	unsigned int splits)
+{
+	struct list_head *nextCell;
+	unsigned int i;
+
+	*count += splits;
+	nextCell = cell->lh.next;
+	for (i = 1; i < splits; ++i)
+		nextCell = nextCell->next;
+
+	return list_entry(nextCell, struct Cell, lh);
 }

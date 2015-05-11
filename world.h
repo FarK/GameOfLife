@@ -35,8 +35,13 @@ void freeList(struct list_head *list);
 
 struct Cell *wit_first(struct World *world);
 struct Cell *wit_first_safe(struct World *world, struct Cell **tmp);
+struct Cell *wit_first_split(unsigned int *count, unsigned int indx,
+	struct World *world);
 bool wit_done(struct Cell *cell, struct World *world);
+inline bool wit_done_split(unsigned int count, struct World *world);
 struct Cell *wit_next(struct Cell *cell);
 struct Cell *wit_next_safe(struct Cell **tmp);
+inline struct Cell *wit_next_split(struct Cell *cell, unsigned int *count,
+	unsigned int splits);
 
 #endif
