@@ -13,8 +13,15 @@ struct CellListNode {
 	struct Cell *cell;
 };
 
+#define WB_TOP    (1<<0)
+#define WB_BOTTOM (1<<1)
+#define WB_RIGHT  (1<<2)
+#define WB_LEFT   (1<<3)
+#define WB_ALL    (WB_TOP | WB_BOTTOM | WB_RIGHT | WB_LEFT)
+#define WB_NONE   0
 
-struct World *createWorld(wsize_t x, wsize_t y);
+
+struct World *createWorld(wsize_t x, wsize_t y, unsigned char bounds);
 void destroyWorld(struct World *world);
 void clearWorld(struct World *world);
 
@@ -26,9 +33,9 @@ struct Cell *killCell(struct Cell *cell, struct World *world);
 void killCells(struct list_head *list, struct World *world);
 struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world);
 void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell);
+char getCellRefs(wsize_t x, wsize_t y, const struct World *world);
 bool isCellAlive(const struct Cell *cell);
-bool isCellAlive_coord(wsize_t x, wsize_t y,
-	const struct World *world);
+bool isCellAlive_coord(wsize_t x, wsize_t y, const struct World *world);
 
 void addToList(struct Cell *cell, struct list_head *list);
 void freeList(struct list_head *list);

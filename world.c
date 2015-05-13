@@ -10,6 +10,12 @@ struct World {
 	wsize_t x;
 	wsize_t y;
 
+	unsigned char bounds;
+	wsize_t minX;
+	wsize_t maxX;
+	wsize_t minY;
+	wsize_t maxY;
+
 	struct Cell ***grid;
 	struct list_head monitoredCells;
 	unsigned int numMonCells;
@@ -27,17 +33,34 @@ struct Cell {
 // Auxiliary functions
 static struct Cell *newCell(wsize_t x, wsize_t y, unsigned char num_ref,
 	bool alive);
+static struct Cell *_reviveCell(wsize_t x, wsize_t y, struct World *world);
 static void addCell(struct Cell *cell, struct World *world);
 static void deleteCell(struct Cell *cell, struct World *world);
 static void addNeighbor(wsize_t x, wsize_t y, struct World *world);
 static void rmNeighbor(wsize_t x, wsize_t y, struct World *world);
-static void checkLimits(wsize_t *x, wsize_t *y, const struct World *world);
+static void incRef(wsize_t x, wsize_t y, struct World *world);
+void decRef(wsize_t x, wsize_t y, struct World *world);
+static bool checkLimits(wsize_t *x, wsize_t *y, const struct World *world);
+static void correctCoords(wsize_t *x, wsize_t *y, const struct World *world);
 
-struct World *createWorld(wsize_t x, wsize_t y)
+
+struct World *createWorld(wsize_t x, wsize_t y, unsigned char bounds)
 {
 	struct World *world;
 	struct Cell **grid;
+	wsize_t minX, maxX, minY, maxY;
 	wsize_t i, j;
+
+	// Define bounds
+	minX = 0;
+	minY = 0;
+	maxX = x;
+	maxY = y;
+
+	if (bounds & WB_TOP)    {++minX; ++maxX; ++x;}
+	if (bounds & WB_BOTTOM) {                ++x;}
+	if (bounds & WB_RIGHT)  {++minY; ++maxY; ++y;}
+	if (bounds & WB_LEFT)   {                ++y;}
 
 	// Allocate memory
 	world = (struct World *) malloc(sizeof(struct World));
@@ -54,6 +77,11 @@ struct World *createWorld(wsize_t x, wsize_t y)
 	// Initialize struct
 	world->x = x;
 	world->y = y;
+	world->bounds = bounds;
+	world->minX = minX;
+	world->maxX = maxX;
+	world->minY = minY;
+	world->maxY = maxY;
 	INIT_LIST_HEAD(&world->monitoredCells);
 	world->numMonCells = 0;
 
@@ -120,7 +148,7 @@ inline static void incRef(wsize_t x, wsize_t y, struct World *world)
 {
 	struct Cell *cell;
 
-	checkLimits(&x, &y, world);
+	if (!checkLimits(&x, &y, world)) return;
 
 	if (world->grid[x][y] != NULL)
 		++(world->grid[x][y]->num_ref);
@@ -134,7 +162,7 @@ inline void decRef(wsize_t x, wsize_t y, struct World *world)
 {
 	struct Cell *cell;
 
-	checkLimits(&x, &y, world);
+	if (!checkLimits(&x, &y, world)) return;
 	cell = world->grid[x][y];
 
 	if (cell == NULL) return;
@@ -170,9 +198,15 @@ static void rmNeighbor(wsize_t x, wsize_t y, struct World *world)
 
 struct Cell *reviveCell(wsize_t x, wsize_t y, struct World *world)
 {
+	correctCoords(&x, &y, world);
+	checkLimits(&x, &y, world);
+	_reviveCell(x, y, world);
+}
+
+inline struct Cell *_reviveCell(wsize_t x, wsize_t y, struct World *world)
+{
 	struct Cell *cell;
 
-	checkLimits(&x, &y, world);
 	cell = world->grid[x][y];
 
 	if (cell == NULL) {
@@ -193,7 +227,7 @@ void reviveCells(struct list_head *list, struct World *world)
 	struct CellListNode *cln;
 
 	list_for_each_entry(cln, list, lh)
-		reviveCell(cln->cell->x, cln->cell->y, world);
+		_reviveCell(cln->cell->x, cln->cell->y, world);
 }
 
 struct Cell *killCell(struct Cell *cell, struct World *world)
@@ -201,7 +235,7 @@ struct Cell *killCell(struct Cell *cell, struct World *world)
 	wsize_t x = cell->x;
 	wsize_t y = cell->y;
 
-	checkLimits(&x, &y, world);
+	/* checkLimits(&x, &y, world); */
 
 	if (cell->alive) {
 		rmNeighbor(x, y, world);
@@ -230,19 +264,49 @@ static void deleteCell(struct Cell *cell, struct World *world)
 	--(world->numMonCells);
 }
 
-inline static void checkLimits(wsize_t *x, wsize_t *y,
+inline static bool checkLimits(wsize_t *x, wsize_t *y,
 	const struct World *world)
 {
-	if (*x < 0)               *x = world->x + *x;
-	else if (*x >= world->x)  *x = *x - world->x;
-	if (*y < 0)               *y = world->y + *y;
-	else if (*y >= world->y)  *y = *y - world->y;
+	bool outOfBounds = false;
+
+	if (*x < world->minX) {
+		*x = world->maxX + *x;
+		outOfBounds =  outOfBounds || world->bounds & WB_TOP;
+	}
+	else if (*x >= world->maxX) {
+		*x = *x - world->maxX;
+		outOfBounds =  outOfBounds || world->bounds & WB_BOTTOM;
+	}
+
+	if (*y < world->minY) {
+		*y = world->maxY + *y;
+		outOfBounds = outOfBounds || world->bounds & WB_LEFT;
+	}
+	else if (*y >= world->maxY) {
+		*y = *y - world->maxY;
+		outOfBounds = outOfBounds || world->bounds & WB_RIGHT;
+	}
+
+	return !outOfBounds;
+}
+
+inline static void correctCoords(wsize_t *x, wsize_t *y, const struct World *world)
+{
+	if (world->bounds & WB_TOP)    ++(*x);
+	if (world->bounds & WB_BOTTOM) ++(*x);
+	if (world->bounds & WB_LEFT)   ++(*y);
+	if (world->bounds & WB_RIGHT)  ++(*y);
 }
 
 inline void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell)
 {
 	*x = cell->x;
 	*y = cell->y;
+}
+
+char getCellRefs(wsize_t x, wsize_t y, const struct World *world)
+{
+	return world->grid[x][y]->num_ref;
 }
 
 inline bool isCellAlive(const struct Cell *cell)
@@ -263,6 +327,7 @@ inline bool isCellAlive_coord(wsize_t x, wsize_t y,
 
 inline struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world)
 {
+	correctCoords(&x, &y, world);
 	checkLimits(&x, &y, world);
 	return world->grid[x][y];
 }

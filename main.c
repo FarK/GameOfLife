@@ -10,7 +10,7 @@ int main(int nargs, char *argv[])
 
 	golInit(2);
 
-	world = createWorld(50, 50);
+	world = createWorld(50, 50, WB_TOP | WB_BOTTOM);
 	printf("Mundo creado = %p\n", world);
 
 	printf("Añadiendo células\n");
