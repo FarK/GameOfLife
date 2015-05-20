@@ -27,7 +27,7 @@ void clearWorld(struct World *world);
 
 void getSize(wsize_t *x, wsize_t *y, const struct World *world);
 
-struct Cell *reviveCell(wsize_t x, wsize_t y, struct World *world);
+void reviveCell(wsize_t x, wsize_t y, struct World *world);
 void reviveCells(struct list_head *list, struct World *world);
 struct Cell *killCell(struct Cell *cell, struct World *world);
 void killCells(struct list_head *list, struct World *world);

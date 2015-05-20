@@ -161,7 +161,7 @@ inline static void incRef(wsize_t x, wsize_t y, struct World *world)
 	if (world->grid[x][y] != NULL)
 		++(world->grid[x][y]->num_ref);
 	else {
-		cell = newCell(x, y, 1,false);
+		cell = newCell(x, y, 1, false);
 		addCell(cell, world);
 	}
 }
@@ -204,7 +204,7 @@ static void rmNeighbor(wsize_t x, wsize_t y, struct World *world)
 	decRef(x+1, y+1, world);
 }
 
-struct Cell *reviveCell(wsize_t x, wsize_t y, struct World *world)
+void reviveCell(wsize_t x, wsize_t y, struct World *world)
 {
 	correctCoords(&x, &y, world);
 	checkLimits(&x, &y, world);
