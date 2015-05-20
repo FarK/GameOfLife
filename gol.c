@@ -101,15 +101,7 @@ enum CellProcessing checkRule(wsize_t x, wsize_t y, const struct Rule *rule,
 
 
 	cellAlive = isCellAlive_coord(x, y, world);
-
-	if (isCellAlive_coord(x,   y-1, world)) ++aliveCounter;
-	if (isCellAlive_coord(x,   y+1, world)) ++aliveCounter;
-	if (isCellAlive_coord(x-1, y,   world)) ++aliveCounter;
-	if (isCellAlive_coord(x-1, y-1, world)) ++aliveCounter;
-	if (isCellAlive_coord(x-1, y+1, world)) ++aliveCounter;
-	if (isCellAlive_coord(x+1, y,   world)) ++aliveCounter;
-	if (isCellAlive_coord(x+1, y-1, world)) ++aliveCounter;
-	if (isCellAlive_coord(x+1, y+1, world)) ++aliveCounter;
+	aliveCounter = getCellRefs(x, y, world);
 
 	if (cellAlive) {
 		satisfy = checkSubrule(rule->survive, aliveCounter);
