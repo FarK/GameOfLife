@@ -15,6 +15,10 @@ struct World {
 	wsize_t maxX;
 	wsize_t minY;
 	wsize_t maxY;
+	wsize_t limX;
+	wsize_t limY;
+	char deltaX;
+	char deltaY;
 
 	struct Cell ***grid;
 	struct list_head monitoredCells;
@@ -48,7 +52,7 @@ struct World *createWorld(wsize_t x, wsize_t y, unsigned char bounds)
 {
 	struct World *world;
 	struct Cell **grid;
-	wsize_t minX, maxX, minY, maxY;
+	wsize_t minX, maxX, minY, maxY, limX, limY;
 	wsize_t i, j;
 
 	// Define bounds
@@ -56,11 +60,13 @@ struct World *createWorld(wsize_t x, wsize_t y, unsigned char bounds)
 	minY = 0;
 	maxX = x;
 	maxY = y;
+	limX = x;
+	limY = y;
 
 	if (bounds & WB_TOP)    {++minX; ++maxX; ++x;}
 	if (bounds & WB_BOTTOM) {                ++x;}
-	if (bounds & WB_RIGHT)  {++minY; ++maxY; ++y;}
-	if (bounds & WB_LEFT)   {                ++y;}
+	if (bounds & WB_LEFT)   {++minY; ++maxY; ++y;}
+	if (bounds & WB_RIGHT)  {                ++y;}
 
 	// Allocate memory
 	world = (struct World *) malloc(sizeof(struct World));
@@ -82,6 +88,10 @@ struct World *createWorld(wsize_t x, wsize_t y, unsigned char bounds)
 	world->maxX = maxX;
 	world->minY = minY;
 	world->maxY = maxY;
+	world->limX = limX;
+	world->limY = limY;
+	world->deltaX =  x - limX;
+	world->deltaY =  y - limY;
 	INIT_LIST_HEAD(&world->monitoredCells);
 	world->numMonCells = 0;
 
@@ -117,10 +127,8 @@ inline void clearWorld(struct World *world)
 
 inline void getSize(wsize_t *x, wsize_t *y, const struct World *world)
 {
-	*x = world->x;
-	*y = world->y;
-
-	return;
+	*x = world->limX;
+	*y = world->limY;
 }
 
 inline static struct Cell *newCell(wsize_t x, wsize_t y, unsigned char num_ref,
@@ -292,10 +300,8 @@ inline static bool checkLimits(wsize_t *x, wsize_t *y,
 
 inline static void correctCoords(wsize_t *x, wsize_t *y, const struct World *world)
 {
-	if (world->bounds & WB_TOP)    ++(*x);
-	if (world->bounds & WB_BOTTOM) ++(*x);
-	if (world->bounds & WB_LEFT)   ++(*y);
-	if (world->bounds & WB_RIGHT)  ++(*y);
+	*x = *x + world->deltaX;
+	*y = *y + world->deltaY;
 }
 
 inline void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell)
