@@ -250,9 +250,6 @@ struct Cell *killCell(struct Cell *cell, struct World *world)
 		cell->alive = false;
 	}
 
-	if (--(cell->num_ref) <= 0)
-		deleteCell(cell, world);
-
 	return cell;
 }
 
