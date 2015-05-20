@@ -307,6 +307,13 @@ inline void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell)
 	*y = cell->y;
 }
 
+char dgetCellRefs(wsize_t x, wsize_t y, const struct World *world)
+{
+	correctCoords(&x, &y, world);
+	checkLimits(&x, &y, world);
+	return world->grid[x][y]->num_ref;
+}
+
 char getCellRefs(wsize_t x, wsize_t y, const struct World *world)
 {
 	return world->grid[x][y]->num_ref;
