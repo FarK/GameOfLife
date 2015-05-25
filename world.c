@@ -9,14 +9,14 @@
 struct World {
 	wsize_t x;
 	wsize_t y;
+	wsize_t fakeX;
+	wsize_t fakeY;
 
 	unsigned char bounds;
 	wsize_t minX;
 	wsize_t maxX;
 	wsize_t minY;
 	wsize_t maxY;
-	wsize_t limX;
-	wsize_t limY;
 	char deltaX;
 	char deltaY;
 
@@ -52,7 +52,7 @@ struct World *createWorld(wsize_t x, wsize_t y, unsigned char bounds)
 {
 	struct World *world;
 	struct Cell **grid;
-	wsize_t minX, maxX, minY, maxY, limX, limY;
+	wsize_t minX, maxX, minY, maxY, fakeX, fakeY;
 	wsize_t i, j;
 
 	// Define bounds
@@ -60,8 +60,8 @@ struct World *createWorld(wsize_t x, wsize_t y, unsigned char bounds)
 	minY = 0;
 	maxX = x;
 	maxY = y;
-	limX = x;
-	limY = y;
+	fakeX = x;
+	fakeY = y;
 
 	if (bounds & WB_TOP)    {++minX; ++maxX; ++x;}
 	if (bounds & WB_BOTTOM) {                ++x;}
@@ -88,10 +88,10 @@ struct World *createWorld(wsize_t x, wsize_t y, unsigned char bounds)
 	world->maxX = maxX;
 	world->minY = minY;
 	world->maxY = maxY;
-	world->limX = limX;
-	world->limY = limY;
-	world->deltaX =  x - limX;
-	world->deltaY =  y - limY;
+	world->fakeX = fakeX;
+	world->fakeY = fakeY;
+	world->deltaX =  x - fakeX;
+	world->deltaY =  y - fakeY;
 	INIT_LIST_HEAD(&world->monitoredCells);
 	world->numMonCells = 0;
 
@@ -127,8 +127,8 @@ inline void clearWorld(struct World *world)
 
 inline void getSize(wsize_t *x, wsize_t *y, const struct World *world)
 {
-	*x = world->limX;
-	*y = world->limY;
+	*x = world->fakeX;
+	*y = world->fakeY;
 }
 
 inline static struct Cell *newCell(wsize_t x, wsize_t y, unsigned char num_ref,
