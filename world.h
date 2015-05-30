@@ -13,15 +13,8 @@ struct CellListNode {
 	struct Cell *cell;
 };
 
-#define WB_TOP    (1<<0)
-#define WB_BOTTOM (1<<1)
-#define WB_RIGHT  (1<<2)
-#define WB_LEFT   (1<<3)
-#define WB_ALL    (WB_TOP | WB_BOTTOM | WB_RIGHT | WB_LEFT)
-#define WB_NONE   0
 
-
-struct World *createWorld(wsize_t x, wsize_t y, unsigned char bounds);
+struct World *createWorld(wsize_t x, wsize_t y, unsigned char limits);
 void destroyWorld(struct World *world);
 void clearWorld(struct World *world);
 
