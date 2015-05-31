@@ -206,12 +206,11 @@ void reviveCells(struct list_head *list, struct World *world)
 		reviveCell(cln->cell->x, cln->cell->y, world);
 }
 
-struct Cell *killCell(struct Cell *cell, struct World *world)
+struct Cell *killCell(wsize_t x, wsize_t y, struct World *world)
 {
-	wsize_t x = cell->x;
-	wsize_t y = cell->y;
+	cell = world->grid[x][y];
 
-	if (cell->alive) {
+	if (cell != NULL && cell->alive) {
 		rmNeighbor(x, y, world);
 		if (cell->num_ref <= 0)
 			deleteCell(cell, world);
@@ -227,7 +226,7 @@ void killCells(struct list_head *list, struct World *world)
 	struct CellListNode *cln;
 
 	list_for_each_entry(cln, list, lh)
-		killCell(cln->cell, world);
+		killCell(cln->cell->x, cln->cell->y, world);
 }
 
 static void deleteCell(struct Cell *cell, struct World *world)
