@@ -36,7 +36,7 @@ static void addNeighbor(wsize_t x, wsize_t y, struct World *world);
 static void rmNeighbor(wsize_t x, wsize_t y, struct World *world);
 static void incRef(wsize_t x, wsize_t y, struct World *world);
 void decRef(wsize_t x, wsize_t y, struct World *world);
-static void checkLimits(wsize_t *x, wsize_t *y, const struct World *world);
+static void toroidalCoords(wsize_t *x, wsize_t *y, const struct World *world);
 static bool inLimits(wsize_t x, const struct World *world);
 
 
@@ -133,7 +133,7 @@ inline static void incRef(wsize_t x, wsize_t y, struct World *world)
 	struct Cell *cell;
 
 	if (inLimits(x, world)) return;
-	checkLimits(&x, &y, world);
+	toroidalCoords(&x, &y, world);
 
 	if (world->grid[x][y] != NULL)
 		++(world->grid[x][y]->num_ref);
@@ -148,7 +148,7 @@ inline void decRef(wsize_t x, wsize_t y, struct World *world)
 	struct Cell *cell;
 
 	if (inLimits(x, world)) return;
-	checkLimits(&x, &y, world);
+	toroidalCoords(&x, &y, world);
 
 	cell = world->grid[x][y];
 	if (cell == NULL) return;
@@ -246,7 +246,7 @@ static void deleteCell(struct Cell *cell, struct World *world)
 	--(world->numMonCells);
 }
 
-inline static void checkLimits(wsize_t *x, wsize_t *y,
+inline static void toroidalCoords(wsize_t *x, wsize_t *y,
 	const struct World *world)
 {
 	if      (*x < 0)         *x = world->x + *x;
@@ -268,7 +268,7 @@ inline void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell)
 
 char dgetCellRefs(wsize_t x, wsize_t y, const struct World *world)
 {
-	checkLimits(&x, &y, world);
+	toroidalCoords(&x, &y, world);
 	return world->grid[x][y]->num_ref;
 }
 
@@ -287,7 +287,7 @@ inline bool isCellAlive_coord(wsize_t x, wsize_t y,
 {
 	struct Cell *cell;
 
-	checkLimits(&x, &y, world);
+	toroidalCoords(&x, &y, world);
 	cell = world->grid[x][y];
 
 	return cell == NULL? false : cell->alive;
@@ -343,7 +343,7 @@ void addToList_coords(wsize_t x, wsize_t y, bool alive, struct list_head *list,
 {
 	struct CellListNode *cellList;
 
-	checkLimits(&x, &y, world);
+	toroidalCoords(&x, &y, world);
 
 	cellList = (struct CellListNode *)malloc(sizeof(struct CellListNode));
 	cellList->cell = newCell(x, y, 0, alive);
