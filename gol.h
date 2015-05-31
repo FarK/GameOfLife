@@ -2,6 +2,7 @@
 #define GOL_H_
 
 #include "world.h"
+#include "boundaryCells.h"
 
 #define RULE_1 (1<<0)
 #define RULE_2 (1<<1)
@@ -24,6 +25,9 @@ static const struct Rule rule_B3S23 = {
 
 void golInit(unsigned int numThreads);
 void golEnd();
-void iteration(struct World *world, const struct Rule *rule);
+void iteration(struct World *world, const struct Rule *rule,
+	struct BoundaryCells **bcells);
+void gol_reviveCell(wsize_t x, wsize_t y, struct World *world);
+void gol_killCell(wsize_t x, wsize_t y, struct World *world);
 
 #endif

@@ -1,83 +1,48 @@
 #include <stdio.h>
-#include "world.h"
-#include "gol.h"
+#include "node.h"
 
-void printCells(struct World *world);
-void printWorld(struct World *world);
 
 int main(int nargs, char *argv[])
 {
-	struct World *world = NULL;
+	struct MPINode *node;
 
-	golInit(2);
+	node = createNode(10, 20);
 
-	world = createWorld(15, 15, WB_RIGHT);
-	printf("Mundo creado = %p\n", world);
+	node_reviveCell(2,7, node);
+	node_reviveCell(2,8, node);
+	node_reviveCell(2,9, node);
+	node_reviveCell(3,7, node);
+	node_reviveCell(4,8, node);
+	/*
+	 * node_reviveCell(1,2, node);
+	 * node_reviveCell(1,3, node);
+	 * node_reviveCell(1,4, node);
+	 */
 
-	printf("Game of life:\n");
-	reviveCell(0, 0, world);
-	reviveCell(0, 1, world);
-	reviveCell(0, 2, world);
+	printNode(node);
 
-	printWorld(world);
+	iterate(node);
+	iterate(node);
+	iterate(node);
+	iterate(node);
+	iterate(node);
+	iterate(node);
+	iterate(node);
+	iterate(node);
+	iterate(node);
+	iterate(node);
+	iterate(node);
+	iterate(node);
+	iterate(node);
+	iterate(node);
+	iterate(node);
+	iterate(node);
+	iterate(node);
+	iterate(node);
 
-	printf("Iteration 1\n");
-	iteration(world, &rule_B3S23);
-	printWorld(world);
+	deleteNode(node);
 
-	printf("Iteration 2\n");
-	iteration(world, &rule_B3S23);
-	printWorld(world);
-
-	destroyWorld(world);
-	golEnd();
+	MPI_Finalize();
 
 	return 0;
-}
-
-void printCells(struct World *world)
-{
-	int i = 0;
-	wsize_t x, y;
-	struct Cell *cell, *tmp = NULL;
-
-	for (cell = wit_first_safe(world, &tmp);
-	     wit_done(cell, world);
-	     cell = wit_next_safe(&tmp))
-	{
-		getCellPos(&x, &y, cell);
-		printf("%2d - (%2lu, %2lu) = %02X\tref=%d\n",
-			i++, x, y, isCellAlive(cell), dgetCellRefs(x,y,world));
-	}
-}
-
-void printWorld(struct World *world)
-{
-	int i,j;
-	wsize_t x,y;
-	struct Cell *cell;
-	bool alive;
-	char numRef;
-
-	getSize(&x,&y, world);
-
-	printf("    ");
-	for (j = 0; j < y; j++)
-		printf("%2d ", j);
-	printf("\n");
-
-	for (i = 0; i < x; i++) {
-		printf("%2d  ", i);
-		for (j = 0; j < y; j++) {
-			cell = getCell(i, j, world);
-			if (cell != NULL) {
-				alive = isCellAlive(cell);
-				numRef = dgetCellRefs(i, j, world);
-				printf("%s%d ", alive?"A":"d", numRef);
-			}
-			else
-				printf(" n ");
-		}
-		printf("\n");
-	}
 }

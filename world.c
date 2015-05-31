@@ -319,6 +319,37 @@ inline bool isCellAlive_coord(wsize_t x, wsize_t y,
 	return cell == NULL? false : cell->alive;
 }
 
+enum WorldBound boundsCheck(wsize_t *x, wsize_t *y, const struct World *world)
+{
+	if (*x == world->minX) {
+		*x = world->x-1;
+		return WB_TOP;
+	} else if (*x == world->maxX) {
+		*x = 0;
+		return WB_BOTTOM;
+	}
+
+	return WB_NONE;
+}
+
+void setBoundaryCells(const struct BoundaryCells *bcells, struct World *world)
+{
+	wsize_t i;
+	wsize_t x, y;
+
+	for (i = 0; i < bcells->toReviveSize; ++i) {
+		x = bcells->toRevive[i].x;
+		y = bcells->toRevive[i].y;
+		addNeighbor(x, y, world);
+	}
+
+	for (i = 0; i < bcells->toKillSize; ++i) {
+		x = bcells->toKill[i].x;
+		y = bcells->toKill[i].y;
+		rmNeighbor(x, y, world);
+	}
+}
+
 inline struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world)
 {
 	/* correctCoords(&x, &y, world); */

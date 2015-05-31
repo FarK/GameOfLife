@@ -3,9 +3,11 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "types.h"
+#include "boundaryCells.h"
 #include "list.h"
+#include <mpi.h>
 
-typedef long int wsize_t;
 struct World;
 struct Cell;
 struct CellListNode {
@@ -31,6 +33,9 @@ char getCellRefs(wsize_t x, wsize_t y, const struct World *world);
 char dgetCellRefs(wsize_t x, wsize_t y, const struct World *world);
 bool isCellAlive(const struct Cell *cell);
 bool isCellAlive_coord(wsize_t x, wsize_t y, const struct World *world);
+
+enum WorldBound boundsCheck(wsize_t *x, wsize_t *y, const struct World *world);
+void setBoundaryCells(const struct BoundaryCells *bcells, struct World *world);
 
 void addToList(struct Cell *cell, struct list_head *list);
 void addToList_coords(wsize_t x, wsize_t y, bool alive, struct list_head *list,

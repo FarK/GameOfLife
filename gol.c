@@ -43,13 +43,20 @@ void golEnd()
 	free(toKill);
 }
 
-void iteration(struct World *world, const struct Rule *rule)
+void iteration(struct World *world, const struct Rule *rule,
+	struct BoundaryCells **bcells)
 {
 	struct Cell *cell;
 	unsigned int i;
 	unsigned int count;
 	unsigned int threadNum, numThreads;
 	wsize_t x, y;
+	enum WorldBound bound;
+	int indx;
+
+	// TODO: it can be multithread?
+	reviveCells(&toRevive[0], world);
+	killCells(&toKill[0], world);
 
 	#pragma omp parallel shared(toRevive, toKill, world, numThreads, rule)\
 	                     private(cell, count, threadNum, x, y)
@@ -66,9 +73,19 @@ void iteration(struct World *world, const struct Rule *rule)
 			switch (checkRule(x, y, rule, world)) {
 				case GOL_REVIVE:
 					addToList(cell, &toRevive[threadNum]);
+
+					bound = boundsCheck(&x, &y, world);
+					if (bound != WB_NONE) {
+						addToRevive(x, y, bcells[bound]);
+					}
 					break;
 				case GOL_KILL:
 					addToList(cell, &toKill[threadNum]);
+
+					bound = boundsCheck(&x, &y, world);
+					if (bound != WB_NONE) {
+						addToKill(x, y, bcells[bound]);
+					}
 					break;
 				case GOL_SURVIVE:
 				case GOL_KEEP_DEAD:
@@ -139,4 +156,14 @@ inline static bool checkSubrule(unsigned char subrule,
 	}
 
 	return satisfy;
+}
+
+inline void gol_reviveCell(wsize_t x, wsize_t y, struct World *world)
+{
+	addToList_coords(x, y, true, &toRevive[0], world);
+}
+
+inline void gol_killCell(wsize_t x, wsize_t y, struct World *world)
+{
+	addToList_coords(x, y, false, &toRevive[0], world);
 }
