@@ -29,7 +29,6 @@ struct Cell {
 // Auxiliary functions
 static struct Cell *newCell(wsize_t x, wsize_t y, unsigned char num_ref,
 	bool alive);
-static struct Cell *_reviveCell(wsize_t x, wsize_t y, struct World *world);
 static void addCell(struct Cell *cell, struct World *world);
 static void deleteCell(struct Cell *cell, struct World *world);
 static void addNeighbor(wsize_t x, wsize_t y, struct World *world);
@@ -184,11 +183,6 @@ static void rmNeighbor(wsize_t x, wsize_t y, struct World *world)
 
 void reviveCell(wsize_t x, wsize_t y, struct World *world)
 {
-	_reviveCell(x, y, world);
-}
-
-inline struct Cell *_reviveCell(wsize_t x, wsize_t y, struct World *world)
-{
 	struct Cell *cell;
 
 	cell = world->grid[x][y];
@@ -202,8 +196,6 @@ inline struct Cell *_reviveCell(wsize_t x, wsize_t y, struct World *world)
 		addNeighbor(x, y, world);
 		cell->alive = true;
 	}
-
-	return cell;
 }
 
 void reviveCells(struct list_head *list, struct World *world)
@@ -211,7 +203,7 @@ void reviveCells(struct list_head *list, struct World *world)
 	struct CellListNode *cln;
 
 	list_for_each_entry(cln, list, lh)
-		_reviveCell(cln->cell->x, cln->cell->y, world);
+		reviveCell(cln->cell->x, cln->cell->y, world);
 }
 
 struct Cell *killCell(struct Cell *cell, struct World *world)
