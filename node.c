@@ -35,6 +35,8 @@ struct MPINode *createNode(wsize_t ws_x, wsize_t ws_y, int numThreads)
 
 	MPI_Comm_size(MPI_COMM_WORLD, &node->numProc);
 
+	ws_x = (ws_x/(double)node->numProc) + 0.5;
+
 	if (node->numProc > 1) {
 		MPI_Comm_rank(MPI_COMM_WORLD, &node->ownId);
 		node->neighborIds[WB_TOP] =
