@@ -232,7 +232,10 @@ struct Cell *killCell(struct Cell *cell, struct World *world)
 
 	if (cell->alive) {
 		rmNeighbor(x, y, world);
-		cell->alive = false;
+		if (cell->num_ref <= 0)
+			deleteCell(cell, world);
+		else
+			cell->alive = false;
 	}
 
 	return cell;
