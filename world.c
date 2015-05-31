@@ -206,7 +206,7 @@ void reviveCells(struct list_head *list, struct World *world)
 		reviveCell(cln->cell->x, cln->cell->y, world);
 }
 
-struct Cell *killCell(wsize_t x, wsize_t y, struct World *world)
+void killCell(wsize_t x, wsize_t y, struct World *world)
 {
 	cell = world->grid[x][y];
 
@@ -217,8 +217,6 @@ struct Cell *killCell(wsize_t x, wsize_t y, struct World *world)
 		else
 			cell->alive = false;
 	}
-
-	return cell;
 }
 
 void killCells(struct list_head *list, struct World *world)

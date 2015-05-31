@@ -25,7 +25,7 @@ void getRealSize(wsize_t *x, wsize_t *y, const struct World *world);
 
 void reviveCell(wsize_t x, wsize_t y, struct World *world);
 void reviveCells(struct list_head *list, struct World *world);
-struct Cell *killCell(wsize_t x, wsize_t y, struct World *world);
+void killCell(wsize_t x, wsize_t y, struct World *world);
 void killCells(struct list_head *list, struct World *world);
 struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world);
 void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell);
