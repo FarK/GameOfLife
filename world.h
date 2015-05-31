@@ -33,6 +33,8 @@ bool isCellAlive(const struct Cell *cell);
 bool isCellAlive_coord(wsize_t x, wsize_t y, const struct World *world);
 
 void addToList(struct Cell *cell, struct list_head *list);
+void addToList_coords(wsize_t x, wsize_t y, bool alive, struct list_head *list,
+	struct World *world);
 void freeList(struct list_head *list);
 
 struct Cell *wit_first(const struct World *world);

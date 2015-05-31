@@ -335,6 +335,18 @@ void addToList(struct Cell *cell, struct list_head *list)
 	list_add(&cellList->lh, list);
 }
 
+void addToList_coords(wsize_t x, wsize_t y, bool alive, struct list_head *list,
+	struct World *world)
+{
+	struct CellListNode *cellList;
+
+	checkLimits(&x, &y, world);
+
+	cellList = (struct CellListNode *)malloc(sizeof(struct CellListNode));
+	cellList->cell = newCell(x, y, 0, alive);
+	list_add(&cellList->lh, list);
+}
+
 void freeList(struct list_head *list)
 {
 	struct CellListNode *cellList, *tmp;
