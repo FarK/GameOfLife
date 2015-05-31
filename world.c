@@ -38,7 +38,8 @@ static void addNeighbor(wsize_t x, wsize_t y, struct World *world);
 static void rmNeighbor(wsize_t x, wsize_t y, struct World *world);
 static void incRef(wsize_t x, wsize_t y, struct World *world);
 void decRef(wsize_t x, wsize_t y, struct World *world);
-static bool checkLimits(wsize_t *x, wsize_t *y, const struct World *world);
+static void checkLimits(wsize_t *x, wsize_t *y, const struct World *world);
+static bool inLimits(wsize_t x, const struct World *world);
 static void correctCoords(wsize_t *x, wsize_t *y, const struct World *world);
 
 
@@ -141,7 +142,8 @@ inline static void incRef(wsize_t x, wsize_t y, struct World *world)
 {
 	struct Cell *cell;
 
-	if (!checkLimits(&x, &y, world)) return;
+	if (inLimits(x, world)) return;
+	checkLimits(&x, &y, world);
 
 	if (world->grid[x][y] != NULL)
 		++(world->grid[x][y]->num_ref);
@@ -155,9 +157,10 @@ inline void decRef(wsize_t x, wsize_t y, struct World *world)
 {
 	struct Cell *cell;
 
-	if (!checkLimits(&x, &y, world)) return;
-	cell = world->grid[x][y];
+	if (inLimits(x, world)) return;
+	checkLimits(&x, &y, world);
 
+	cell = world->grid[x][y];
 	if (cell == NULL) return;
 
 	--(cell->num_ref);
@@ -257,28 +260,18 @@ static void deleteCell(struct Cell *cell, struct World *world)
 	--(world->numMonCells);
 }
 
-inline static bool checkLimits(wsize_t *x, wsize_t *y,
+inline static void checkLimits(wsize_t *x, wsize_t *y,
 	const struct World *world)
 {
-	bool outOfBounds = false;
+	if      (*x < 0)         *x = world->x + *x;
+	else if (*x >= world->x) *x = *x - world->x;
 
-	if (*x < world->minX) {
-		*x = world->maxX + *x;
-		outOfBounds =  world->limits & true;
-	}
-	else if (*x >= world->maxX) {
-		*x = *x - world->maxX;
-		outOfBounds =  world->limits & true;
-	}
-
-	if (*y < 0) {
-		*y = world->maxY + *y;
-	}
-	else if (*y >= world->y) {
-		*y = *y - world->maxY;
-	}
-
-	return !outOfBounds;
+	if      (*y < 0)         *y = world->y + *y;
+	else if (*y >= world->y) *y = *y - world->y;
+}
+inline static bool inLimits(wsize_t x, const struct World *world)
+{
+	return !world->limits || x <= 0 || x >= world->x-1;
 }
 
 inline static void correctCoords(wsize_t *x, wsize_t *y, const struct World *world)
