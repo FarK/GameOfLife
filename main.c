@@ -42,7 +42,5 @@ int main(int nargs, char *argv[])
 
 	deleteNode(node);
 
-	MPI_Finalize();
-
 	return 0;
 }

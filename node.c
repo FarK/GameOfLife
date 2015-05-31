@@ -55,6 +55,8 @@ void deleteNode(struct MPINode *node)
 	destroyWorld(node->world);
 	golEnd();
 	free(node);
+
+	MPI_Finalize();
 }
 
 inline static bool receiveBound(enum WorldBound bound, enum BoundaryType btype,
