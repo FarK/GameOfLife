@@ -69,10 +69,10 @@ struct Cell *wit_first_safe(const struct World *world, struct Cell **tmp);
 struct Cell *wit_first_split(unsigned int *count, unsigned int indx,
 	const struct World *world);
 bool wit_done(const struct Cell *cell, const struct World *world);
-inline bool wit_done_split(unsigned int count, const struct World *world);
+bool wit_done_split(unsigned int count, const struct World *world);
 struct Cell *wit_next(const struct Cell *cell);
 struct Cell *wit_next_safe(struct Cell **tmp);
-inline struct Cell *wit_next_split(const struct Cell *cell, unsigned int *count,
+struct Cell *wit_next_split(const struct Cell *cell, unsigned int *count,
 	unsigned int splits);
 
 #endif
