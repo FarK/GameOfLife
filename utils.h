@@ -6,22 +6,6 @@
 #include <mpi.h>
 #include "world.h"
 
-void printCells(struct World *world)
-{
-	int i = 0;
-	wsize_t x, y;
-	struct Cell *cell, *tmp = NULL;
-
-	for (cell = wit_first_safe(world, &tmp);
-	     wit_done(cell, world);
-	     cell = wit_next_safe(&tmp))
-	{
-		getCellPos(&x, &y, cell);
-		printf("%2d - (%2lu, %2lu) = %02X\tref=%d\n",
-			i++, x, y, isCellAlive(cell), dgetCellRefs(x,y,world));
-	}
-}
-
 void printWorld(struct World *world)
 {
 	int i,j;

@@ -50,7 +50,6 @@ void killCell(wsize_t x, wsize_t y, struct World *world);
 void killCells(struct list_head *list, struct World *world);
 
 struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world);
-void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell);
 char getCellRefs(struct Cell *cell);
 char dgetCellRefs(wsize_t x, wsize_t y, const struct World *world);
 bool isCellAlive(const struct Cell *cell);

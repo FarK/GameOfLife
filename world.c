@@ -417,12 +417,6 @@ inline void getBoundaries(struct Boundary **tx, struct Boundary **rx,
 	*rx = world->RXBoundary;
 }
 
-inline void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell)
-{
-	*x = cell->x;
-	*y = cell->y;
-}
-
 char dgetCellRefs(wsize_t x, wsize_t y, const struct World *world)
 {
 	toroidalCoords(&x, &y, world);
