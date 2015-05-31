@@ -6,7 +6,7 @@ int main(int nargs, char *argv[])
 {
 	struct MPINode *node;
 
-	node = createNode(10, 20);
+	node = createNode(10, 20, -1);
 
 	node_reviveCell(2,7, node);
 	node_reviveCell(2,8, node);

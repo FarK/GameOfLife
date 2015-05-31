@@ -22,14 +22,16 @@ static bool sendBound(enum WorldBound bound, enum BoundaryType btype,
 static void receiveBounds(struct MPINode *node);
 static void sendBounds(struct MPINode *node);
 
-struct MPINode *createNode(wsize_t ws_x, wsize_t ws_y)
+struct MPINode *createNode(wsize_t ws_x, wsize_t ws_y, int numThreads)
 {
 	struct MPINode *node;
 
 	node = (struct MPINode *)malloc(sizeof(struct MPINode));
 
 	MPI_Init(NULL, NULL);
-	golInit(1);
+
+	if (numThreads == 0) numThreads = omp_get_max_threads();
+	golInit(numThreads);
 
 	MPI_Comm_size(MPI_COMM_WORLD, &node->numProc);
 
