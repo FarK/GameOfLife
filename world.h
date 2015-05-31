@@ -19,6 +19,7 @@ void destroyWorld(struct World *world);
 void clearWorld(struct World *world);
 
 void getSize(wsize_t *x, wsize_t *y, const struct World *world);
+void getRealSize(wsize_t *x, wsize_t *y, const struct World *world);
 
 void reviveCell(wsize_t x, wsize_t y, struct World *world);
 void reviveCells(struct list_head *list, struct World *world);
