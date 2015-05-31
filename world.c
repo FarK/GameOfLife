@@ -429,9 +429,9 @@ char dgetCellRefs(wsize_t x, wsize_t y, const struct World *world)
 	return world->grid[x][y]->num_ref;
 }
 
-char getCellRefs(wsize_t x, wsize_t y, const struct World *world)
+inline char getCellRefs(struct Cell *cell)
 {
-	return world->grid[x][y]->num_ref;
+	return cell->num_ref;
 }
 
 inline bool isCellAlive(const struct Cell *cell)

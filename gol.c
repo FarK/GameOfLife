@@ -14,8 +14,7 @@ enum CellProcessing{
 static struct list_head *toRevive;
 static struct list_head *toKill;
 
-static enum CellProcessing checkRule(wsize_t x, wsize_t y,
-	const struct Rule *rule, const struct World *world);
+static enum CellProcessing checkRule(struct Cell *cell,const struct Rule *rule);
 static bool checkSubrule(unsigned char subrule, unsigned char aliveCounter);
 
 void golInit(unsigned int numThreads)
@@ -49,14 +48,13 @@ void iteration(struct World *world, const struct Rule *rule)
 	unsigned int i;
 	unsigned int count;
 	unsigned int threadNum, numThreads;
-	wsize_t x, y;
 
 	// TODO: it can be multithread?
 	reviveCells(&toRevive[0], world);
 	killCells(&toKill[0], world);
 
 	#pragma omp parallel shared(toRevive, toKill, world, numThreads, rule)\
-	                     private(cell, count, threadNum, x, y)
+	                     private(cell, count, threadNum)
 	{
 		numThreads = omp_get_num_threads();
 		threadNum = omp_get_thread_num();
@@ -65,9 +63,7 @@ void iteration(struct World *world, const struct Rule *rule)
 		     wit_done_split(count, world);
 		     cell = wit_next_split(cell, &count, numThreads))
 		{
-			getCellPos(&x, &y, cell);
-
-			switch (checkRule(x, y, rule, world)) {
+			switch (checkRule(cell, rule)) {
 				case GOL_REVIVE:
 					addToList(cell, &toRevive[threadNum]);
 					break;
@@ -95,8 +91,7 @@ void iteration(struct World *world, const struct Rule *rule)
 	}
 }
 
-enum CellProcessing checkRule(wsize_t x, wsize_t y, const struct Rule *rule,
-	const struct World *world)
+enum CellProcessing checkRule(struct Cell *cell, const struct Rule *rule)
 {
 	enum CellProcessing cProc;
 	unsigned char aliveCounter = 0;
@@ -104,8 +99,8 @@ enum CellProcessing checkRule(wsize_t x, wsize_t y, const struct Rule *rule,
 	bool cellAlive;
 
 
-	cellAlive = isCellAlive_coord(x, y, world);
-	aliveCounter = getCellRefs(x, y, world);
+	cellAlive = isCellAlive(cell);
+	aliveCounter = getCellRefs(cell);
 
 	if (cellAlive) {
 		satisfy = checkSubrule(rule->survive, aliveCounter);

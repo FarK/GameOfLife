@@ -48,12 +48,12 @@ void reviveCell(wsize_t x, wsize_t y, struct World *world);
 void reviveCells(struct list_head *list, struct World *world);
 void killCell(wsize_t x, wsize_t y, struct World *world);
 void killCells(struct list_head *list, struct World *world);
+
 struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world);
 void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell);
-char getCellRefs(wsize_t x, wsize_t y, const struct World *world);
+char getCellRefs(struct Cell *cell);
 char dgetCellRefs(wsize_t x, wsize_t y, const struct World *world);
 bool isCellAlive(const struct Cell *cell);
-bool isCellAlive_coord(wsize_t x, wsize_t y, const struct World *world);
 
 void getBoundaries(struct Boundary **tx, struct Boundary **rx,
 	const struct World *world);
