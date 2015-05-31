@@ -200,8 +200,8 @@ static void rmNeighbor(wsize_t x, wsize_t y, struct World *world)
 
 void reviveCell(wsize_t x, wsize_t y, struct World *world)
 {
-	correctCoords(&x, &y, world);
-	checkLimits(&x, &y, world);
+	/* correctCoords(&x, &y, world); */
+	/* checkLimits(&x, &y, world); */
 	_reviveCell(x, y, world);
 }
 
@@ -321,8 +321,8 @@ inline bool isCellAlive_coord(wsize_t x, wsize_t y,
 
 inline struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world)
 {
-	correctCoords(&x, &y, world);
-	checkLimits(&x, &y, world);
+	/* correctCoords(&x, &y, world); */
+	/* checkLimits(&x, &y, world); */
 	return world->grid[x][y];
 }
 
