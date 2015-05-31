@@ -156,3 +156,8 @@ void printNode(struct MPINode *node)
 	printf("NODE %d\n", node->ownId);
 	printWorld(node->world);
 }
+
+inline int getNodeId(struct MPINode *node)
+{
+	return node->ownId;
+}

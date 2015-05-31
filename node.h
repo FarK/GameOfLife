@@ -10,6 +10,7 @@ void deleteNode(struct MPINode *node);
 void iterate(struct MPINode *node);
 void node_reviveCell(wsize_t x, wsize_t y, struct MPINode *node);
 void node_killCell(wsize_t x, wsize_t y, struct MPINode *node);
+int getNodeId(struct MPINode *node);
 
 void printNode(struct MPINode *node);
 
