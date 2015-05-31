@@ -11,6 +11,8 @@ struct World {
 	wsize_t y;
 
 	unsigned char limits;
+	struct Boundary *TXBoundary;
+	struct Boundary *RXBoundary;
 
 	struct Cell ***grid;
 	struct list_head monitoredCells;
@@ -26,6 +28,8 @@ struct Cell {
 	bool alive;
 };
 
+unsigned int boundaryMaxSize;
+
 // Auxiliary functions
 static struct Cell *newCell(wsize_t x, wsize_t y, unsigned char num_ref,
 	bool alive);
@@ -36,7 +40,10 @@ static void rmNeighbor(wsize_t x, wsize_t y, struct World *world);
 static void incRef(wsize_t x, wsize_t y, struct World *world);
 void decRef(wsize_t x, wsize_t y, struct World *world);
 static void toroidalCoords(wsize_t *x, wsize_t *y, const struct World *world);
-static bool outOfLimits(wsize_t x, const struct World *world);
+static struct Boundary *createBoundary();
+static void freeBoundary(struct Boundary *boundary);
+static void addToBoundary(wsize_t y, enum WorldBound bound,
+	enum BoundaryType btype, struct Boundary *boundary);
 
 
 struct World *createWorld(wsize_t x, wsize_t y, unsigned char limits)
@@ -49,6 +56,12 @@ struct World *createWorld(wsize_t x, wsize_t y, unsigned char limits)
 	world = (struct World *) malloc(sizeof(struct World));
 	world->grid = (struct Cell ***)malloc(x * sizeof(struct Cell *));
 	grid = (struct Cell **)malloc(x * y * sizeof(struct Cell *));
+
+	if (limits) {
+		boundaryMaxSize = y * sizeof(wsize_t);
+		world->RXBoundary = createBoundary(boundaryMaxSize);
+		world->TXBoundary = createBoundary(boundaryMaxSize);
+	}
 
 	// Initialize pointers
 	for (i = 0; i < x; ++i) {
@@ -67,6 +80,30 @@ struct World *createWorld(wsize_t x, wsize_t y, unsigned char limits)
 	return world;
 }
 
+static struct Boundary *createBoundary()
+{
+	struct Boundary *boundary;
+
+	boundary = (struct Boundary *)malloc(sizeof(struct Boundary));
+
+	boundary->boundaries[WB_TOP][TO_REVIVE] =
+		(wsize_t *)malloc(boundaryMaxSize);
+	boundary->boundaries[WB_TOP][TO_KILL] =
+		(wsize_t *)malloc(boundaryMaxSize);
+	boundary->boundaries[WB_BOTTOM][TO_REVIVE] =
+		(wsize_t *)malloc(boundaryMaxSize);
+	boundary->boundaries[WB_BOTTOM][TO_KILL] =
+		(wsize_t *)malloc(boundaryMaxSize);
+
+
+	boundary->boundariesSizes[WB_TOP][TO_REVIVE] = 0;
+	boundary->boundariesSizes[WB_TOP][TO_KILL] = 0;
+	boundary->boundariesSizes[WB_BOTTOM][TO_REVIVE] = 0;
+	boundary->boundariesSizes[WB_BOTTOM][TO_KILL] = 0;
+
+	return boundary;
+}
+
 inline void destroyWorld(struct World *world)
 {
 	struct Cell *cell, *tmp;
@@ -77,7 +114,22 @@ inline void destroyWorld(struct World *world)
 	}
 	free(world->grid[0]);
 	free(world->grid);
+
+	if (world->limits) {
+		freeBoundary(world->TXBoundary);
+		freeBoundary(world->RXBoundary);
+	}
 	free(world);
+}
+
+inline static void freeBoundary(struct Boundary *boundary)
+{
+	free(boundary->boundaries[WB_TOP][TO_REVIVE]);
+	free(boundary->boundaries[WB_TOP][TO_KILL]);
+	free(boundary->boundaries[WB_BOTTOM][TO_REVIVE]);
+	free(boundary->boundaries[WB_BOTTOM][TO_KILL]);
+
+	free(boundary);
 }
 
 inline void clearWorld(struct World *world)
@@ -92,6 +144,20 @@ inline void clearWorld(struct World *world)
 	}
 
 	world->numMonCells = 0;
+	clearBoundaries(world);
+}
+
+inline void clearBoundaries(struct World *world)
+{
+	world->TXBoundary->boundariesSizes[WB_TOP   ][TO_REVIVE] = 0;
+	world->TXBoundary->boundariesSizes[WB_TOP   ][TO_KILL  ] = 0;
+	world->TXBoundary->boundariesSizes[WB_BOTTOM][TO_REVIVE] = 0;
+	world->TXBoundary->boundariesSizes[WB_BOTTOM][TO_KILL  ] = 0;
+
+	world->RXBoundary->boundariesSizes[WB_TOP   ][TO_REVIVE] = 0;
+	world->RXBoundary->boundariesSizes[WB_TOP   ][TO_KILL  ] = 0;
+	world->RXBoundary->boundariesSizes[WB_BOTTOM][TO_REVIVE] = 0;
+	world->RXBoundary->boundariesSizes[WB_BOTTOM][TO_KILL  ] = 0;
 }
 
 inline void getSize(wsize_t *x, wsize_t *y, const struct World *world)
@@ -131,7 +197,6 @@ inline static void incRef(wsize_t x, wsize_t y, struct World *world)
 {
 	struct Cell *cell;
 
-	if (outOfLimits(x, world)) return;
 	toroidalCoords(&x, &y, world);
 
 	if (world->grid[x][y] != NULL)
@@ -146,7 +211,6 @@ inline void decRef(wsize_t x, wsize_t y, struct World *world)
 {
 	struct Cell *cell;
 
-	if (outOfLimits(x, world)) return;
 	toroidalCoords(&x, &y, world);
 
 	cell = world->grid[x][y];
@@ -181,9 +245,49 @@ static void rmNeighbor(wsize_t x, wsize_t y, struct World *world)
 	decRef(x+1, y+1, world);
 }
 
+inline static void addTopNeighbor(wsize_t x, wsize_t y, struct World *world)
+{
+	incRef(x-1, y, world);
+	incRef(x-1, y-1, world);
+	incRef(x-1, y+1, world);
+}
+
+inline static void addBottomNeighbor(wsize_t x, wsize_t y, struct World *world)
+{
+	incRef(x+1, y, world);
+	incRef(x+1, y-1, world);
+	incRef(x+1, y+1, world);
+}
+
+inline static void rmTopNeighbor(wsize_t x, wsize_t y, struct World *world)
+{
+	decRef(x-1, y, world);
+	decRef(x-1, y-1, world);
+	decRef(x-1, y+1, world);
+}
+
+inline static void rmBottomNeighbor(wsize_t x, wsize_t y, struct World *world)
+{
+	decRef(x+1, y, world);
+	decRef(x+1, y-1, world);
+	decRef(x+1, y+1, world);
+}
+
 void reviveCell(wsize_t x, wsize_t y, struct World *world)
 {
 	struct Cell *cell;
+
+	if (world->limits) {
+		if (x < 0) {
+			addToBoundary(y, WB_TOP, TO_REVIVE, world->TXBoundary);
+			addTopNeighbor(x, y, world);
+			return;
+		} else if (x >= world->x) {
+			addToBoundary(y, WB_BOTTOM, TO_REVIVE, world->TXBoundary);
+			addBottomNeighbor(x, y, world);
+			return;
+		}
+	}
 
 	cell = world->grid[x][y];
 
@@ -208,6 +312,20 @@ void reviveCells(struct list_head *list, struct World *world)
 
 void killCell(wsize_t x, wsize_t y, struct World *world)
 {
+	struct Cell *cell;
+
+	if (world->limits) {
+		if (x < 0) {
+			addToBoundary(y, WB_TOP, TO_KILL, world->TXBoundary);
+			rmTopNeighbor(x, y, world);
+			return;
+		} else if (x >= world->x) {
+			addToBoundary(y, WB_BOTTOM, TO_KILL, world->TXBoundary);
+			rmBottomNeighbor(x, y, world);
+			return;
+		}
+	}
+
 	cell = world->grid[x][y];
 
 	if (cell != NULL && cell->alive) {
@@ -244,9 +362,59 @@ inline static void toroidalCoords(wsize_t *x, wsize_t *y,
 	if      (*y < 0)         *y = world->y + *y;
 	else if (*y >= world->y) *y = *y - world->y;
 }
-inline static bool outOfLimits(wsize_t x, const struct World *world)
+
+inline static void addToBoundary(wsize_t y, enum WorldBound bound,
+	enum BoundaryType btype, struct Boundary *boundary)
 {
-	return !world->limits || x < 0 || x >= world->x;
+	wsize_t indx = boundary->boundariesSizes[bound][btype]++;
+	boundary->boundaries[bound][btype][indx] = y;
+}
+
+void setBoundary(enum WorldBound bound, enum BoundaryType btype,
+	struct World *world)
+{
+	int i;
+	wsize_t x_coord;
+	wsize_t bsize;
+	void (*reviveKill)(wsize_t, wsize_t, struct World *);
+
+	bsize = world->RXBoundary->boundariesSizes[bound][btype];
+
+	switch (bound) {
+		case WB_TOP:
+			x_coord = 0;
+			break;
+		case WB_BOTTOM:
+			x_coord = world->x-1;
+			break;
+		default:
+			return;
+	};
+
+	switch (btype) {
+		case TO_KILL:
+			reviveKill = reviveCell;
+			break;
+		case TO_REVIVE:
+			reviveKill = killCell;
+			break;
+		default:
+			return;
+	};
+
+	for (i = 0; i < bsize; i++)
+		reviveKill(
+			x_coord,
+			world->RXBoundary->boundaries[bound][btype][i],
+			world
+		);
+}
+
+inline void getBoundaries(struct Boundary **tx, struct Boundary **rx,
+	const struct World *world)
+{
+	*tx = world->TXBoundary;
+	*rx = world->RXBoundary;
 }
 
 inline void getCellPos(wsize_t *x, wsize_t *y, const struct Cell *cell)
@@ -293,24 +461,6 @@ enum WorldBound boundsCheck(wsize_t *x, wsize_t *y, const struct World *world)
 	}
 
 	return WB_NONE;
-}
-
-void setBoundaryCells(const struct BoundaryCells *bcells, struct World *world)
-{
-	wsize_t i;
-	wsize_t x, y;
-
-	for (i = 0; i < bcells->toReviveSize; ++i) {
-		x = bcells->toRevive[i].x;
-		y = bcells->toRevive[i].y;
-		addNeighbor(x, y, world);
-	}
-
-	for (i = 0; i < bcells->toKillSize; ++i) {
-		x = bcells->toKill[i].x;
-		y = bcells->toKill[i].y;
-		rmNeighbor(x, y, world);
-	}
 }
 
 inline struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world)

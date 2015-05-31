@@ -1,6 +1,5 @@
 #include "node.h"
 #include "gol.h"
-#include "boundaryCells.h"
 #include <stdlib.h>
 #include <mpi.h>
 
@@ -8,13 +7,20 @@
 
 struct MPINode {
 	struct World *world;
-	struct BoundaryCells *TXbCells[2];
-	struct BoundaryCells *RXbCells[2];
-	wsize_t boundaryMaxSize;
 	int numProc;
 	int ownId;
 	int neighborIds[2];
+
+	struct Boundary *RXboundary;
+	struct Boundary *TXboundary;
 };
+
+static bool receiveBound(enum WorldBound bound, enum BoundaryType btype,
+	struct MPINode *node);
+static bool sendBound(enum WorldBound bound, enum BoundaryType btype,
+	struct MPINode *node);
+static void receiveBounds(struct MPINode *node);
+static void sendBounds(struct MPINode *node);
 
 struct MPINode *createNode(wsize_t ws_x, wsize_t ws_y)
 {
@@ -23,7 +29,6 @@ struct MPINode *createNode(wsize_t ws_x, wsize_t ws_y)
 	node = (struct MPINode *)malloc(sizeof(struct MPINode));
 
 	MPI_Init(NULL, NULL);
-	setupMPIBoundaryCellsDatatypes();
 	golInit(1);
 
 	MPI_Comm_size(MPI_COMM_WORLD, &node->numProc);
@@ -34,20 +39,10 @@ struct MPINode *createNode(wsize_t ws_x, wsize_t ws_y)
 			node->ownId? node->ownId - 1 : node->numProc - 1;
 		node->neighborIds[WB_BOTTOM] =(node->ownId + 1) % node->numProc;
 
-		node->boundaryMaxSize = ws_y;
-
-		node->TXbCells[WB_TOP] =
-			createBoundaryCells(node->boundaryMaxSize);
-		node->TXbCells[WB_BOTTOM] =
-			createBoundaryCells(node->boundaryMaxSize);
-		node->RXbCells[WB_TOP] =
-			createBoundaryCells(node->boundaryMaxSize);
-		node->RXbCells[WB_BOTTOM] =
-			createBoundaryCells(node->boundaryMaxSize);
-
 		node->world = createWorld(ws_x, ws_y, true);
+
+		getBoundaries(&node->TXboundary, &node->RXboundary,node->world);
 	} else
-		/* node->world = createWorld(ws_x, ws_y, WL_NONE); */
 		node->world = createWorld(ws_x, ws_y, false);
 
 	return node;
@@ -56,144 +51,73 @@ struct MPINode *createNode(wsize_t ws_x, wsize_t ws_y)
 void deleteNode(struct MPINode *node)
 {
 	destroyWorld(node->world);
-	if (node->numProc > 1) {
-		printf("DELETING BOUNDARIES\n");
-		deleteBoundaryCells(node->TXbCells[WB_TOP]);
-		deleteBoundaryCells(node->TXbCells[WB_BOTTOM]);
-		deleteBoundaryCells(node->RXbCells[WB_TOP]);
-		deleteBoundaryCells(node->RXbCells[WB_BOTTOM]);
-	}
 	golEnd();
 	free(node);
 }
 
-static inline bool receiveBounds(struct MPINode *node)
+inline static bool receiveBound(enum WorldBound bound, enum BoundaryType btype,
+	struct MPINode *node)
 {
 	int err;
 	MPI_Status status;
 
-	// Receive toRevive first boundary
 	err = MPI_Recv(
-		node->RXbCells[WB_TOP]->toRevive,
-		node->boundaryMaxSize,
-		mpi_coords_t,
-		node->neighborIds[WB_TOP],
+		node->RXboundary->boundaries[bound][btype],
+		boundaryMaxSize,
+		MPI_WSIZE_T,
+		node->neighborIds[bound],
 		node->ownId,
 		MPI_COMM_WORLD,
 		&status
 	);
-	MPI_Get_count(&status, mpi_coords_t,
-		(int *)&(node->RXbCells[WB_TOP]->toReviveSize));
-	if (node->RXbCells[WB_TOP]->toReviveSize) {
-		printf("\tNode %d <- %d: receive toRevive WB_TOP: Size = %ld\n", node->ownId, node->neighborIds[WB_TOP], node->RXbCells[WB_TOP]->toReviveSize);
-		printf("\tNode %d <- %d: (%ld, %ld)\n", node->ownId, node->neighborIds[WB_TOP], node->RXbCells[WB_TOP]->toRevive[0].x, node->RXbCells[WB_TOP]->toRevive[0].y);
-	}
 
-	// Receive toKill first boundary
-	err = MPI_Recv(
-		node->RXbCells[WB_TOP]->toKill,
-		node->boundaryMaxSize,
-		mpi_coords_t,
-		node->neighborIds[WB_TOP],
-		node->ownId,
-		MPI_COMM_WORLD,
-		&status
-	);
-	MPI_Get_count(&status, mpi_coords_t,
-		(int *)&(node->RXbCells[WB_TOP]->toKillSize));
-	if (node->RXbCells[WB_TOP]->toKillSize)
-		printf("\tNode %d <- %d: receive toKill WB_TOP: Size = %ld\n", node->ownId, node->neighborIds[WB_TOP], node->RXbCells[WB_TOP]->toKillSize);
-
-	// Receive toRevive second boundary
-	err = MPI_Recv(
-		node->RXbCells[WB_BOTTOM]->toRevive,
-		node->boundaryMaxSize,
-		mpi_coords_t,
-		node->neighborIds[WB_BOTTOM],
-		node->ownId,
-		MPI_COMM_WORLD,
-		&status
-	);
-	MPI_Get_count(&status, mpi_coords_t,
-		(int *)&(node->RXbCells[WB_BOTTOM]->toReviveSize));
-	if (node->RXbCells[WB_BOTTOM]->toReviveSize)
-		printf("\tNode %d <- %d: receive toRevive WB_BOTTOM: Size = %ld\n", node->ownId, node->neighborIds[WB_BOTTOM], node->RXbCells[WB_BOTTOM]->toReviveSize);
-
-	// Receive toKill second boundary
-	err = MPI_Recv(
-		node->RXbCells[WB_BOTTOM]->toKill,
-		node->boundaryMaxSize,
-		mpi_coords_t,
-		node->neighborIds[WB_BOTTOM],
-		node->ownId,
-		MPI_COMM_WORLD,
-		&status
-	);
-	MPI_Get_count(&status, mpi_coords_t,
-		(int *)&(node->RXbCells[WB_BOTTOM]->toKillSize));
-	if (node->RXbCells[WB_BOTTOM]->toKillSize)
-		printf("\tNode %d <- %d: receive toKill WB_BOTTOM: Size = %ld\n", node->ownId, node->neighborIds[WB_BOTTOM], node->RXbCells[WB_TOP]->toKillSize);
-
-	setBoundaryCells(node->RXbCells[WB_TOP], node->world);
-	setBoundaryCells(node->RXbCells[WB_BOTTOM], node->world);
+	MPI_Get_count(&status, MPI_WSIZE_T,
+		(int *)&(node->RXboundary->boundariesSizes[bound][btype]));
 
 	return err == MPI_SUCCESS;
 }
 
-static inline bool sendBounds(struct MPINode *node)
+inline static bool sendBound(enum WorldBound bound, enum BoundaryType btype,
+	struct MPINode *node)
 {
 	int err;
+	MPI_Status status;
 
-	// Send toRevive first boundary
 	err = MPI_Send(
-		node->TXbCells[WB_TOP]->toRevive,
-		node->TXbCells[WB_TOP]->toReviveSize,
-		mpi_coords_t,
-		node->neighborIds[WB_TOP],
-		node->neighborIds[WB_TOP],
+		node->TXboundary->boundaries[bound][btype],
+		node->TXboundary->boundariesSizes[bound][btype],
+		MPI_WSIZE_T,
+		node->neighborIds[bound],
+		node->neighborIds[bound],
 		MPI_COMM_WORLD
 	);
-	if (node->TXbCells[WB_TOP]->toReviveSize)
-		printf("\tNode %d -> %d: send toRevive WB_TOP: Size = %ld\n", node->ownId, node->neighborIds[WB_TOP], node->TXbCells[WB_TOP]->toReviveSize);
 
-	// Send toKill fisrt boundary
-	err = MPI_Send(
-		node->TXbCells[WB_TOP]->toKill,
-		node->TXbCells[WB_TOP]->toKillSize,
-		mpi_coords_t,
-		node->neighborIds[WB_TOP],
-		node->neighborIds[WB_TOP],
-		MPI_COMM_WORLD
-	);
-	if (node->TXbCells[WB_TOP]->toKillSize)
-		printf("\tNode %d -> %d: send toKill WB_TOP: Size = %ld\n", node->ownId, node->neighborIds[WB_TOP], node->TXbCells[WB_TOP]->toKillSize);
+	return err;
+}
 
-	// Send toRevive second boundary
-	err = MPI_Send(
-		node->TXbCells[WB_BOTTOM]->toRevive,
-		node->TXbCells[WB_BOTTOM]->toReviveSize,
-		mpi_coords_t,
-		node->neighborIds[WB_BOTTOM],
-		node->neighborIds[WB_BOTTOM],
-		MPI_COMM_WORLD
-	);
-	if (node->TXbCells[WB_BOTTOM]->toReviveSize)
-		printf("\tNode %d -> %d: send toRevive WB_BOTTOM: Size = %ld\n", node->ownId, node->neighborIds[WB_BOTTOM], node->TXbCells[WB_BOTTOM]->toReviveSize);
+inline static void receiveBounds(struct MPINode *node)
+{
+	// Receive boundaries
+	receiveBound(WB_TOP,    TO_REVIVE, node);
+	setBoundary(WB_TOP, TO_REVIVE, node->world);
 
-	// Send toKill second boundary
-	err = MPI_Send(
-		node->TXbCells[WB_BOTTOM]->toKill,
-		node->TXbCells[WB_BOTTOM]->toKillSize,
-		mpi_coords_t,
-		node->neighborIds[WB_BOTTOM],
-		node->neighborIds[WB_BOTTOM],
-		MPI_COMM_WORLD
-	);
-	if (node->TXbCells[WB_BOTTOM]->toKillSize)
-		printf("\tNode %d -> %d: send toKill WB_BOTTOM: Size = %ld\n", node->ownId, node->neighborIds[WB_BOTTOM], node->TXbCells[WB_BOTTOM]->toKillSize);
+	receiveBound(WB_BOTTOM, TO_REVIVE, node);
+	setBoundary(WB_TOP, TO_REVIVE, node->world);
 
+	receiveBound(WB_TOP,    TO_KILL,   node);
+	setBoundary(WB_TOP, TO_REVIVE, node->world);
 
-	return err == MPI_SUCCESS;
+	receiveBound(WB_BOTTOM, TO_KILL,   node);
+	setBoundary(WB_TOP, TO_REVIVE, node->world);
+}
+
+inline static void sendBounds(struct MPINode *node)
+{
+	// Send boundaries
+	sendBound(WB_TOP,    TO_REVIVE, node);
+	sendBound(WB_TOP,    TO_REVIVE, node);
+	sendBound(WB_BOTTOM, TO_KILL,   node);
+	sendBound(WB_BOTTOM, TO_KILL,   node);
 }
 
 inline void iterate(struct MPINode *node)
@@ -202,14 +126,11 @@ inline void iterate(struct MPINode *node)
 
 	if (node->numProc > 1) {
 		sendBounds(node);
-
 		receiveBounds(node);
-
-		clearBoundaryCells(node->TXbCells[WB_TOP]);
-		clearBoundaryCells(node->TXbCells[WB_BOTTOM]);
+		clearBoundaries(node->world);
 	}
 
-	iteration(node->world, &rule_B3S23, node->TXbCells);
+	iteration(node->world, &rule_B3S23);
 	printf("ITERATION %d - NODE %d\n", it++, node->ownId);
 	printWorld(node->world);
 }

@@ -3,10 +3,12 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "types.h"
-#include "boundaryCells.h"
 #include "list.h"
 #include <mpi.h>
+
+
+#define MPI_WSIZE_T MPI_LONG_LONG_INT
+typedef long int wsize_t;
 
 struct World;
 struct Cell;
@@ -15,10 +17,29 @@ struct CellListNode {
 	struct Cell *cell;
 };
 
+enum WorldBound {
+	WB_TOP = 0,
+	WB_BOTTOM = 1,
+	WB_NONE
+};
+
+enum BoundaryType {
+	TO_REVIVE = 0,
+	TO_KILL = 1
+};
+
+struct Boundary{
+	wsize_t *boundaries[2][2];
+	wsize_t boundariesSizes[2][2];
+};
+
+extern unsigned int boundaryMaxSize;
+
 
 struct World *createWorld(wsize_t x, wsize_t y, unsigned char limits);
 void destroyWorld(struct World *world);
 void clearWorld(struct World *world);
+void clearBoundaries(struct World *world);
 
 void getSize(wsize_t *x, wsize_t *y, const struct World *world);
 void getRealSize(wsize_t *x, wsize_t *y, const struct World *world);
@@ -34,8 +55,10 @@ char dgetCellRefs(wsize_t x, wsize_t y, const struct World *world);
 bool isCellAlive(const struct Cell *cell);
 bool isCellAlive_coord(wsize_t x, wsize_t y, const struct World *world);
 
-enum WorldBound boundsCheck(wsize_t *x, wsize_t *y, const struct World *world);
-void setBoundaryCells(const struct BoundaryCells *bcells, struct World *world);
+void getBoundaries(struct Boundary **tx, struct Boundary **rx,
+	const struct World *world);
+void setBoundary(enum WorldBound bound, enum BoundaryType btype,
+	struct World *world);
 
 void addToList(struct Cell *cell, struct list_head *list);
 void addToList_coords(wsize_t x, wsize_t y, bool alive, struct list_head *list,

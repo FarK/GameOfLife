@@ -2,7 +2,6 @@
 #define NODE_H_
 
 #include "world.h"
-#include "types.h"
 
 struct MPINode;
 

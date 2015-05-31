@@ -43,16 +43,13 @@ void golEnd()
 	free(toKill);
 }
 
-void iteration(struct World *world, const struct Rule *rule,
-	struct BoundaryCells **bcells)
+void iteration(struct World *world, const struct Rule *rule)
 {
 	struct Cell *cell;
 	unsigned int i;
 	unsigned int count;
 	unsigned int threadNum, numThreads;
 	wsize_t x, y;
-	enum WorldBound bound;
-	int indx;
 
 	// TODO: it can be multithread?
 	reviveCells(&toRevive[0], world);
@@ -73,19 +70,9 @@ void iteration(struct World *world, const struct Rule *rule,
 			switch (checkRule(x, y, rule, world)) {
 				case GOL_REVIVE:
 					addToList(cell, &toRevive[threadNum]);
-
-					bound = boundsCheck(&x, &y, world);
-					if (bound != WB_NONE) {
-						addToRevive(x, y, bcells[bound]);
-					}
 					break;
 				case GOL_KILL:
 					addToList(cell, &toKill[threadNum]);
-
-					bound = boundsCheck(&x, &y, world);
-					if (bound != WB_NONE) {
-						addToKill(x, y, bcells[bound]);
-					}
 					break;
 				case GOL_SURVIVE:
 				case GOL_KEEP_DEAD:
