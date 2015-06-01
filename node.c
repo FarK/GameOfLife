@@ -1,5 +1,6 @@
 #include "node.h"
 #include "gol.h"
+#include <omp.h>
 #include <stdlib.h>
 #include <mpi.h>
 
