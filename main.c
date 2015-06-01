@@ -17,6 +17,8 @@ bool processArgs(struct Parameters *params, int argc, char *argv[]);
 void printHelp(char *argv[]);
 void poblateWorld(struct MPINode *node);
 
+void treadIOError(struct MPINode *node);
+
 int main(int argc, char *argv[])
 {
 	struct MPINode *node;
@@ -26,13 +28,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 
 	node = createNode(params.x, params.y, params.numThreads);
-	if (node == NULL) {
-		fprintf(stderr,
-			"Can't create MPI node. Please make sure you have enough permmissions\n"
-		);
-		nodeAbort(node);
-		return EXIT_FAILURE;
-	}
+	if (node == NULL) treadIOError(node);
 
 	poblateWorld(node);
 
@@ -40,23 +36,10 @@ int main(int argc, char *argv[])
 		iterate(node);
 
 		if (params.record) {
-			if (!write(node)) {
-				fprintf(stderr,
-					"Can't write output. Please make sure you have enough permmissions\n"
-				);
-				nodeAbort(node);
-				return EXIT_FAILURE;
-			}
+			if (!write(node)) treadIOError(node);
 		}
 	}
-
-	if (!write(node)) {
-		fprintf(stderr,
-			"Can't write output. Please make sure you have enough permmissions\n"
-		);
-		nodeAbort(node);
-		return EXIT_FAILURE;
-	}
+	if (!write(node)) treadIOError(node);
 
 	deleteNode(node);
 
@@ -170,3 +153,14 @@ void printHelp(char *argv[])
 	fprintf(stderr, "\t-i, --iterations <number of iterations>\n");
 	fprintf(stderr, "\t\tNumber of iteratons to do\n");
 }
+
+void treadIOError(struct MPINode *node)
+{
+	fprintf(stderr,
+		"Can't write output. Please make sure you have enough permmissions\n"
+	);
+	nodeAbort(node);
+
+	exit(EXIT_FAILURE);
+}
+
