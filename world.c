@@ -427,12 +427,10 @@ inline bool isCellAlive(const struct Cell *cell)
 	return cell->alive;
 }
 
-inline bool isCellAlive_coord(wsize_t x, wsize_t y,
-	const struct World *world)
+inline bool isCellAlive_coord(wsize_t x, wsize_t y, const struct World *world)
 {
 	struct Cell *cell;
 
-	toroidalCoords(&x, &y, world);
 	cell = world->grid[x][y];
 
 	return cell == NULL? false : cell->alive;
