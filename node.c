@@ -16,6 +16,7 @@ struct MPINode {
 	struct Boundary *TXboundary;
 };
 
+static void freeNode(struct MPINode *node);
 static bool receiveBound(enum WorldBound bound, enum BoundaryType btype,
 	struct MPINode *node);
 static bool sendBound(enum WorldBound bound, enum BoundaryType btype,
@@ -53,13 +54,23 @@ struct MPINode *createNode(wsize_t ws_x, wsize_t ws_y, int numThreads)
 	return node;
 }
 
-void deleteNode(struct MPINode *node)
+inline static void freeNode(struct MPINode *node)
 {
 	destroyWorld(node->world);
 	golEnd();
 	free(node);
+}
 
+void deleteNode(struct MPINode *node)
+{
+	freeNode(node);
 	MPI_Finalize();
+}
+
+inline void nodeAbort(struct MPINode *node)
+{
+	if (node) freeNode(node);
+	MPI_Abort(MPI_COMM_WORLD, -1);
 }
 
 inline static bool receiveBound(enum WorldBound bound, enum BoundaryType btype,
