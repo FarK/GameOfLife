@@ -44,7 +44,7 @@ static void setNeighbor(wsize_t x, wsize_t y, unsigned bound,
 	void (*setRef)(wsize_t, wsize_t, struct World *),
 	struct World *world);
 static void incRef(wsize_t x, wsize_t y, struct World *world);
-void decRef(wsize_t x, wsize_t y, struct World *world);
+static void decRef(wsize_t x, wsize_t y, struct World *world);
 static void toroidalCoords(wsize_t *x, wsize_t *y, const struct World *world);
 static struct Boundary *createBoundary();
 static void freeBoundary(struct Boundary *boundary);
