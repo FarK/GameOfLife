@@ -10,6 +10,7 @@ struct Parameters {
 	wsize_t x, y;
 	int numThreads;
 	long long unsigned int iterations;
+	int record;
 };
 
 bool processArgs(struct Parameters *params, int argc, char *argv[]);
@@ -37,13 +38,24 @@ int main(int argc, char *argv[])
 
 	while (params.iterations--) {
 		iterate(node);
-		if (!write(node)) {
-			fprintf(stderr,
-				"Can't write output. Please make sure you have enough permmissions\n"
-			);
-			nodeAbort(node);
-			return EXIT_FAILURE;
+
+		if (params.record) {
+			if (!write(node)) {
+				fprintf(stderr,
+					"Can't write output. Please make sure you have enough permmissions\n"
+				);
+				nodeAbort(node);
+				return EXIT_FAILURE;
+			}
 		}
+	}
+
+	if (!write(node)) {
+		fprintf(stderr,
+			"Can't write output. Please make sure you have enough permmissions\n"
+		);
+		nodeAbort(node);
+		return EXIT_FAILURE;
 	}
 
 	deleteNode(node);
@@ -66,11 +78,14 @@ void poblateWorld(struct MPINode *node)
 
 bool processArgs(struct Parameters *params, int argc, char *argv[])
 {
+	static int record;
+
 	static struct option options[] =
 	{
-		{"size",       required_argument, NULL, 's'},
-		{"threads",    required_argument, NULL, 't'},
-		{"iterations", required_argument, NULL, 'i'},
+		{"size",       required_argument, NULL,    's'},
+		{"threads",    required_argument, NULL,    't'},
+		{"iterations", required_argument, NULL,    'i'},
+		{"record",     no_argument,       &record,  1 },
 		{0, 0, 0, 0}
 	};
 
@@ -85,10 +100,12 @@ bool processArgs(struct Parameters *params, int argc, char *argv[])
 	params->iterations = 0;
 
 	while(1) {
-		opt = getopt_long(argc, argv, "s:t:i:", options, &optIdx);
+		opt = getopt_long(argc, argv, "s:t:i:r", options, &optIdx);
 		if (opt == -1) break;
 
 		switch (opt) {
+			case 0:
+				break;
 			case 's':
 				x_char = strpbrk(optarg, "x");
 				if (x_char == NULL) goto error;
@@ -112,11 +129,16 @@ bool processArgs(struct Parameters *params, int argc, char *argv[])
 				if (errno == ERANGE) goto error;
 				break;
 
+			case 'r':
+				record = 1;
+				break;
 			case '?':
 			default:
 				goto error;
 		};
 	}
+
+	params->record = record;
 
 	if (
 		params->x == 0 ||
