@@ -10,12 +10,14 @@ set(HDRS
 	world.h
 	gol.h
 	node.h
+	io.h
 	)
 
 set(SRCS
 	world.c
 	gol.c
 	node.c
+	io.c
 	)
 
 add_executable(gameOfLife
