@@ -14,6 +14,8 @@ struct MPINode {
 
 	struct Boundary *RXboundary;
 	struct Boundary *TXboundary;
+
+	long long unsigned int itCounter;
 };
 
 static void freeNode(struct MPINode *node);
@@ -50,6 +52,8 @@ struct MPINode *createNode(wsize_t ws_x, wsize_t ws_y, int numThreads)
 		getBoundaries(&node->TXboundary, &node->RXboundary,node->world);
 	} else
 		node->world = createWorld(ws_x, ws_y, false);
+
+	node->itCounter = 0;
 
 	return node;
 }
@@ -147,8 +151,7 @@ inline void iterate(struct MPINode *node)
 	}
 
 	iteration(node->world, &rule_B3S23);
-	printf("ITERATION %d - NODE %d\n", it++, node->ownId);
-	printWorld(node->world);
+	++(node->itCounter);
 }
 
 inline void node_reviveCell(wsize_t x, wsize_t y, struct MPINode *node)
