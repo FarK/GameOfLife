@@ -166,12 +166,6 @@ inline void getSize(wsize_t *x, wsize_t *y, const struct World *world)
 	*y = world->y;
 }
 
-void getRealSize(wsize_t *x, wsize_t *y, const struct World *world)
-{
-	*x = world->x;
-	*y = world->y;
-}
-
 inline static struct Cell *newCell(wsize_t x, wsize_t y, unsigned char num_ref,
 	bool alive)
 {
