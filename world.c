@@ -385,7 +385,7 @@ inline void getBoundaries(struct Boundary **tx, struct Boundary **rx,
 char dgetCellRefs(wsize_t x, wsize_t y, const struct World *world)
 {
 	toroidalCoords(&x, &y, world);
-	return world->grid[x][y]->num_ref;
+	return world->grid[x][y] == NULL? 0 : world->grid[x][y]->num_ref;
 }
 
 inline char getCellRefs(struct Cell *cell)
