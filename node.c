@@ -108,7 +108,6 @@ inline static bool sendBound(enum WorldBound bound, enum BoundaryType btype,
 	struct MPINode *node)
 {
 	int err;
-	MPI_Status status;
 
 	err = MPI_Send(
 		node->TXboundary->boundaries[bound][btype],
