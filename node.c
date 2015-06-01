@@ -140,8 +140,6 @@ inline static void sendBounds(struct MPINode *node)
 
 inline void iterate(struct MPINode *node)
 {
-	static int it = WB_TOP;
-
 	if (node->numProc > 1) {
 		sendBounds(node);
 		receiveBounds(node);
