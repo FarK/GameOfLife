@@ -25,17 +25,30 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 
 	node = createNode(params.x, params.y, params.numThreads);
+	if (node == NULL) {
+		fprintf(stderr,
+			"Can't create MPI node. Please make sure you have enough permmissions\n"
+		);
+		nodeAbort(node);
+		return EXIT_FAILURE;
+	}
 
 	poblateWorld(node);
 
 	while (params.iterations--) {
 		iterate(node);
-		printNode(node);
+		if (!write(node)) {
+			fprintf(stderr,
+				"Can't write output. Please make sure you have enough permmissions\n"
+			);
+			nodeAbort(node);
+			return EXIT_FAILURE;
+		}
 	}
 
 	deleteNode(node);
 
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 void poblateWorld(struct MPINode *node)

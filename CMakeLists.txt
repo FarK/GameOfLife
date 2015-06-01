@@ -6,7 +6,6 @@ set(CMAKE_C_COMPILER "mpicc")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g --fast-math -Wall -fopenmp")
 
 set(HDRS
-	utils.h
 	world.h
 	gol.h
 	node.h

@@ -1,10 +1,9 @@
 #include "node.h"
 #include "gol.h"
+#include "io.h"
 #include <omp.h>
 #include <stdlib.h>
 #include <mpi.h>
-
-#include "utils.h"
 
 struct MPINode {
 	struct World *world;
@@ -16,6 +15,7 @@ struct MPINode {
 	struct Boundary *TXboundary;
 
 	long long unsigned int itCounter;
+	char dirName[MAX_FILENAME];
 };
 
 static void freeNode(struct MPINode *node);
@@ -54,6 +54,11 @@ struct MPINode *createNode(wsize_t ws_x, wsize_t ws_y, int numThreads)
 		node->world = createWorld(ws_x, ws_y, false);
 
 	node->itCounter = 0;
+	snprintf(node->dirName, MAX_FILENAME, "node%d", node->ownId);
+	if (!createSubdir(node->dirName)) {
+		freeNode(node);
+		node = NULL;
+	}
 
 	return node;
 }
@@ -164,10 +169,40 @@ inline void node_killCell(wsize_t x, wsize_t y, struct MPINode *node)
 	gol_killCell(x, y, node->world);
 }
 
-void printNode(struct MPINode *node)
+bool write(struct MPINode *node)
 {
-	printf("NODE %d\n", node->ownId);
-	printWorld(node->world);
+	char filename[MAX_FILENAME];
+	bool alive;
+	bool ret;
+	wsize_t x, y;
+	wsize_t i, j;
+	char *buffer, *pBuffer;
+	size_t buffSize;
+
+	getSize(&x, &y, node->world);
+	buffSize = x*(y*2 + 1) + 1;
+
+	buffer = (char *)malloc(buffSize * sizeof(char));
+	if (buffer == NULL) return false;
+	pBuffer = buffer;
+
+	// Fill buffer
+	for (i = 0; i < x; ++i) {
+		for (j = 0; j < y; ++j) {
+			alive = isCellAlive_coord(i, j, node->world);
+			pBuffer += sprintf(pBuffer, "%lc ", alive? '#' : '.');
+		}
+		pBuffer += sprintf(pBuffer, "\n");
+	}
+	buffer[buffSize-1] = '\0';
+
+	// Write file
+	snprintf(filename, MAX_FILENAME, "%03Ld", node->itCounter);
+	ret = writeBuffer(buffer, buffSize, node->dirName, filename);
+
+	free(buffer);
+
+	return ret;
 }
 
 inline int getNodeId(struct MPINode *node)
