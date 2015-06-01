@@ -180,7 +180,7 @@ bool write(struct MPINode *node)
 	size_t buffSize;
 
 	getSize(&x, &y, node->world);
-	buffSize = x*(y*2 + 1) + 1;
+	buffSize = x*(y*2 + 1) + 2;
 
 	buffer = (char *)malloc(buffSize * sizeof(char));
 	if (buffer == NULL) return false;
@@ -189,12 +189,18 @@ bool write(struct MPINode *node)
 	// Fill buffer
 	for (i = 0; i < x; ++i) {
 		for (j = 0; j < y; ++j) {
-			alive = isCellAlive_coord(i, j, node->world);
-			pBuffer += sprintf(pBuffer, "%lc ", alive? '#' : '.');
+			struct Cell *cell = getCell(i, j, node->world);
+			if (cell == NULL)
+				pBuffer += sprintf(pBuffer, ". ");
+			else{
+				alive = isCellAlive(cell);
+				pBuffer += sprintf(pBuffer, "%c ", alive? 'o' : '.');
+			}
 		}
 		pBuffer += sprintf(pBuffer, "\n");
 	}
-	buffer[buffSize-1] = '\0';
+	buffer[buffSize-1] = '\n';
+	buffer[buffSize-2] = '\0';
 
 	// Write file
 	snprintf(filename, MAX_FILENAME, "%03Ld", node->itCounter);
