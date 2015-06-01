@@ -126,24 +126,24 @@ inline static void receiveBounds(struct MPINode *node)
 {
 	// Receive boundaries
 	receiveBound(WB_TOP,    TO_REVIVE, node);
-	setBoundary(WB_TOP, TO_REVIVE, node->world);
+	setBoundary(WB_TOP,     TO_REVIVE, node->world);
 
 	receiveBound(WB_BOTTOM, TO_REVIVE, node);
-	setBoundary(WB_TOP, TO_REVIVE, node->world);
+	setBoundary(WB_BOTTOM,  TO_REVIVE, node->world);
 
 	receiveBound(WB_TOP,    TO_KILL,   node);
-	setBoundary(WB_TOP, TO_REVIVE, node->world);
+	setBoundary(WB_TOP,     TO_KILL, node->world);
 
 	receiveBound(WB_BOTTOM, TO_KILL,   node);
-	setBoundary(WB_TOP, TO_REVIVE, node->world);
+	setBoundary(WB_BOTTOM,  TO_KILL, node->world);
 }
 
 inline static void sendBounds(struct MPINode *node)
 {
 	// Send boundaries
 	sendBound(WB_TOP,    TO_REVIVE, node);
-	sendBound(WB_TOP,    TO_REVIVE, node);
-	sendBound(WB_BOTTOM, TO_KILL,   node);
+	sendBound(WB_BOTTOM, TO_REVIVE, node);
+	sendBound(WB_TOP,    TO_KILL,   node);
 	sendBound(WB_BOTTOM, TO_KILL,   node);
 }
 
