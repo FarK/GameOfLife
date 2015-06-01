@@ -6,6 +6,11 @@
 // Macro for disable unused warnings
 # define UNUSED(x) UNUSED_ ## x __attribute__((unused))
 
+#define NB_TOP (1<<0)
+#define NB_MID (1<<1)
+#define NB_BOT (1<<2)
+#define NB_ALL (NB_TOP | NB_MID | NB_BOT)
+
 struct World {
 	wsize_t x;
 	wsize_t y;
@@ -35,8 +40,9 @@ static struct Cell *newCell(wsize_t x, wsize_t y, unsigned char num_ref,
 	bool alive);
 static void addCell(struct Cell *cell, struct World *world);
 static void deleteCell(struct Cell *cell, struct World *world);
-static void addNeighbor(wsize_t x, wsize_t y, struct World *world);
-static void rmNeighbor(wsize_t x, wsize_t y, struct World *world);
+static void setNeighbor(wsize_t x, wsize_t y, unsigned bound,
+	void (*setRef)(wsize_t, wsize_t, struct World *),
+	struct World *world);
 static void incRef(wsize_t x, wsize_t y, struct World *world);
 void decRef(wsize_t x, wsize_t y, struct World *world);
 static void toroidalCoords(wsize_t *x, wsize_t *y, const struct World *world);
@@ -215,71 +221,38 @@ inline void decRef(wsize_t x, wsize_t y, struct World *world)
 		deleteCell(cell, world);
 }
 
-static void addNeighbor(wsize_t x, wsize_t y, struct World *world)
+static void setNeighbor(wsize_t x, wsize_t y, unsigned bound,
+	void (*setRef)(wsize_t, wsize_t, struct World *),
+	struct World *world)
 {
-	incRef(x, y-1, world);
-	incRef(x, y+1, world);
-	incRef(x-1, y, world);
-	incRef(x-1, y-1, world);
-	incRef(x-1, y+1, world);
-	incRef(x+1, y, world);
-	incRef(x+1, y-1, world);
-	incRef(x+1, y+1, world);
-}
-
-static void rmNeighbor(wsize_t x, wsize_t y, struct World *world)
-{
-	decRef(x, y-1, world);
-	decRef(x, y+1, world);
-	decRef(x-1, y, world);
-	decRef(x-1, y-1, world);
-	decRef(x-1, y+1, world);
-	decRef(x+1, y, world);
-	decRef(x+1, y-1, world);
-	decRef(x+1, y+1, world);
-}
-
-inline static void addTopNeighbor(wsize_t x, wsize_t y, struct World *world)
-{
-	incRef(x-1, y, world);
-	incRef(x-1, y-1, world);
-	incRef(x-1, y+1, world);
-}
-
-inline static void addBottomNeighbor(wsize_t x, wsize_t y, struct World *world)
-{
-	incRef(x+1, y, world);
-	incRef(x+1, y-1, world);
-	incRef(x+1, y+1, world);
-}
-
-inline static void rmTopNeighbor(wsize_t x, wsize_t y, struct World *world)
-{
-	decRef(x-1, y, world);
-	decRef(x-1, y-1, world);
-	decRef(x-1, y+1, world);
-}
-
-inline static void rmBottomNeighbor(wsize_t x, wsize_t y, struct World *world)
-{
-	decRef(x+1, y, world);
-	decRef(x+1, y-1, world);
-	decRef(x+1, y+1, world);
+	if (bound & NB_TOP) {
+		setRef(x+1, y, world);
+		setRef(x+1, y-1, world);
+		setRef(x+1, y+1, world);
+	}
+	if (bound & NB_MID) {
+		setRef(x, y-1, world);
+		setRef(x, y+1, world);
+	}
+	if (bound & NB_BOT) {
+		setRef(x-1, y, world);
+		setRef(x-1, y-1, world);
+		setRef(x-1, y+1, world);
+	}
 }
 
 void reviveCell(wsize_t x, wsize_t y, struct World *world)
 {
 	struct Cell *cell;
+	unsigned bound = NB_ALL;
 
 	if (world->limits) {
-		if (x < 0) {
+		if (x == 0) {
 			addToBoundary(y, WB_TOP, TO_REVIVE, world->TXBoundary);
-			addTopNeighbor(x, y, world);
-			return;
-		} else if (x >= world->x) {
+			bound = NB_TOP | NB_MID;
+		} else if (x == world->x-1) {
 			addToBoundary(y, WB_BOTTOM, TO_REVIVE, world->TXBoundary);
-			addBottomNeighbor(x, y, world);
-			return;
+			bound = NB_BOT | NB_MID;
 		}
 	}
 
@@ -288,10 +261,10 @@ void reviveCell(wsize_t x, wsize_t y, struct World *world)
 	if (cell == NULL) {
 		cell = newCell(x, y, 0, true);
 		addCell(cell, world);
-		addNeighbor(x, y, world);
+		setNeighbor(x, y, bound, incRef, world);
 	}
 	else if (!cell->alive) {
-		addNeighbor(x, y, world);
+		setNeighbor(x, y, bound, incRef, world);
 		cell->alive = true;
 	}
 }
@@ -307,27 +280,23 @@ void reviveCells(struct list_head *list, struct World *world)
 void killCell(wsize_t x, wsize_t y, struct World *world)
 {
 	struct Cell *cell;
+	unsigned bound = NB_ALL;
 
 	if (world->limits) {
-		if (x < 0) {
+		if (x == 0) {
 			addToBoundary(y, WB_TOP, TO_KILL, world->TXBoundary);
-			rmTopNeighbor(x, y, world);
-			return;
-		} else if (x >= world->x) {
+			bound = NB_TOP | NB_MID;
+		} else if (x == world->x-1) {
 			addToBoundary(y, WB_BOTTOM, TO_KILL, world->TXBoundary);
-			rmBottomNeighbor(x, y, world);
-			return;
+			bound = NB_BOT | NB_MID;
 		}
 	}
 
 	cell = world->grid[x][y];
 
+	setNeighbor(x, y, bound, decRef, world);
 	if (cell != NULL && cell->alive) {
-		rmNeighbor(x, y, world);
-		if (cell->num_ref <= 0)
-			deleteCell(cell, world);
-		else
-			cell->alive = false;
+		cell->alive = false;
 	}
 }
 
@@ -369,39 +338,41 @@ void setBoundary(enum WorldBound bound, enum BoundaryType btype,
 {
 	int i;
 	wsize_t x_coord;
+	wsize_t y_coord;
 	wsize_t bsize;
-	void (*reviveKill)(wsize_t, wsize_t, struct World *);
+	void (*setRef)(wsize_t, wsize_t, struct World *);
+	unsigned neighborBounds;
 
 	bsize = world->RXBoundary->boundariesSizes[bound][btype];
 
 	switch (bound) {
 		case WB_TOP:
-			x_coord = 0;
+			x_coord = world->x;
+			neighborBounds = NB_BOT;
 			break;
 		case WB_BOTTOM:
-			x_coord = world->x-1;
+			x_coord = -1;
+			neighborBounds = NB_TOP;
 			break;
 		default:
 			return;
 	};
 
 	switch (btype) {
-		case TO_KILL:
-			reviveKill = reviveCell;
-			break;
 		case TO_REVIVE:
-			reviveKill = killCell;
+			setRef = incRef;
+			break;
+		case TO_KILL:
+			setRef = decRef;
 			break;
 		default:
 			return;
 	};
 
-	for (i = 0; i < bsize; i++)
-		reviveKill(
-			x_coord,
-			world->RXBoundary->boundaries[bound][btype][i],
-			world
-		);
+	for (i = 0; i < bsize; i++) {
+		y_coord = world->RXBoundary->boundaries[bound][btype][i],
+		setNeighbor(x_coord, y_coord, neighborBounds, setRef, world);
+	}
 }
 
 inline void getBoundaries(struct Boundary **tx, struct Boundary **rx,
