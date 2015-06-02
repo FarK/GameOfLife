@@ -172,7 +172,6 @@ void run(struct MPINode *node)
 
 		if (node->record && !write(node)) treadIOError(node);
 	}
-	if (!write(node)) treadIOError(node);
 
 	pTime = endMeasurement(pTime);
 	addProccessTime(pTime, node->stats);
