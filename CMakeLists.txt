@@ -10,6 +10,7 @@ set(HDRS
 	gol.h
 	node.h
 	io.h
+	stats.h
 	)
 
 set(SRCS
@@ -17,6 +18,7 @@ set(SRCS
 	gol.c
 	node.c
 	io.c
+	stats.c
 	)
 
 add_executable(gameOfLife

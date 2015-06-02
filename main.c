@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <getopt.h>
 #include "node.h"
+#include "stats.h"
+#include <omp.h>
 
 struct Parameters {
 	wsize_t x, y;
@@ -23,6 +25,7 @@ int main(int argc, char *argv[])
 {
 	struct MPINode *node;
 	struct Parameters params;
+	struct Stats *stats;
 
 	if(!processArgs(&params, argc, argv))
 		return EXIT_FAILURE;
@@ -31,6 +34,11 @@ int main(int argc, char *argv[])
 	if (node == NULL) treadIOError(node);
 
 	poblateWorld(node);
+
+	if (getNodeId(node) == 0) {
+		stats = createStats(params.iterations, params.numThreads);
+		saveStats(stats);
+	}
 
 	while (params.iterations--) {
 		iterate(node);
