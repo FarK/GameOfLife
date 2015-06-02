@@ -8,7 +8,8 @@
 #define MAX_FILENAME 10
 
 // TOOD: Make it cross-platform
-bool createSubdir(char *dirName);
-bool writeBuffer(char *buffer, size_t size, char *dirName, char *filename);
+bool createSubdir(const char *dirName);
+bool writeBuffer(char *buffer, size_t size, const char *dirName,
+	const char *filename);
 
 #endif

@@ -7,9 +7,9 @@
 #include <dirent.h>
 #include <errno.h>
 
-bool rmRDir(char *dirName);
+static bool rmRDir(const char *dirName);
 
-bool createSubdir(char *dirName)
+bool createSubdir(const char *dirName)
 {
 	int mkdirRet;
 
@@ -18,7 +18,8 @@ bool createSubdir(char *dirName)
 	return mkdirRet == 0 || errno != EEXIST;
 }
 
-bool writeBuffer(char *buffer, size_t size, char *dirName, char *filename)
+bool writeBuffer(char *buffer, size_t size, const char *dirName,
+	const char *filename)
 {
 	FILE *file;
 	size_t written;
@@ -37,7 +38,7 @@ bool writeBuffer(char *buffer, size_t size, char *dirName, char *filename)
 	return true;
 }
 
-bool rmRDir(char *dirName)
+static bool rmRDir(const char *dirName)
 {
 	DIR *dir;
 	struct dirent *entity;
