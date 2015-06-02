@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <mpi.h>
 
+#define MAX_FILENAME 10
+
 struct MPINode {
 	struct World *world;
 	int numProc;
@@ -202,7 +204,7 @@ bool write(struct MPINode *node)
 	buffer[buffSize-2] = '\0';
 
 	// Write file
-	snprintf(filename, MAX_FILENAME, "%03Ld", node->itCounter);
+	snprintf(filename, 3+1, "%03Ld", node->itCounter);
 	ret = writeBuffer(buffer, buffSize, node->dirName, filename);
 
 	free(buffer);
