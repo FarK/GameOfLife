@@ -16,10 +16,12 @@ struct MPINode {
 	struct Boundary *RXboundary;
 	struct Boundary *TXboundary;
 
-	long long unsigned int itCounter;
+	long long unsigned int itCounter, iterations;
+	bool record;
 	char dirName[MAX_FILENAME];
 };
 
+static void iterate(struct MPINode *node);
 static void freeNode(struct MPINode *node);
 static bool receiveBound(enum WorldBound bound, enum BoundaryType btype,
 	struct MPINode *node);
@@ -27,21 +29,22 @@ static bool sendBound(enum WorldBound bound, enum BoundaryType btype,
 	struct MPINode *node);
 static void receiveBounds(struct MPINode *node);
 static void sendBounds(struct MPINode *node);
+static void treadIOError(struct MPINode *node);
 
-struct MPINode *createNode(wsize_t ws_x, wsize_t ws_y, int numThreads)
+struct MPINode *createNode(const struct Parameters *params)
 {
 	struct MPINode *node;
+	wsize_t x, y;
 
 	node = (struct MPINode *)malloc(sizeof(struct MPINode));
 
 	MPI_Init(NULL, NULL);
-
-	if (numThreads == 0) numThreads = omp_get_max_threads();
-	golInit(numThreads);
+	golInit(params->numThreads);
 
 	MPI_Comm_size(MPI_COMM_WORLD, &node->numProc);
 
-	ws_x = (ws_x/(double)node->numProc) + 0.5;
+	x = (params->x/(double)node->numProc) + 0.5;
+	y = params->y;
 
 	if (node->numProc > 1) {
 		MPI_Comm_rank(MPI_COMM_WORLD, &node->ownId);
@@ -49,18 +52,16 @@ struct MPINode *createNode(wsize_t ws_x, wsize_t ws_y, int numThreads)
 			node->ownId? node->ownId - 1 : node->numProc - 1;
 		node->neighborIds[WB_BOTTOM] =(node->ownId + 1) % node->numProc;
 
-		node->world = createWorld(ws_x, ws_y, true);
+		node->world = createWorld(x, y, true);
 
 		getBoundaries(&node->TXboundary, &node->RXboundary,node->world);
 	} else
-		node->world = createWorld(ws_x, ws_y, false);
+		node->world = createWorld(params->x, params->y, false);
 
+	node->iterations = params->iterations;
 	node->itCounter = 0;
 	snprintf(node->dirName, MAX_FILENAME, "node%d", node->ownId);
-	if (!createSubdir(node->dirName)) {
-		freeNode(node);
-		node = NULL;
-	}
+	if (!createSubdir(node->dirName)) treadIOError(node);
 
 	return node;
 }
@@ -148,7 +149,16 @@ inline static void sendBounds(struct MPINode *node)
 	sendBound(WB_BOTTOM, TO_KILL,   node);
 }
 
-inline void iterate(struct MPINode *node)
+void run(struct MPINode *node)
+{
+	while (node->iterations--) {
+		iterate(node);
+		if (node->record && !write(node)) treadIOError(node);
+	}
+	if (!write(node)) treadIOError(node);
+}
+
+inline static void iterate(struct MPINode *node)
 {
 	if (node->numProc > 1) {
 		sendBounds(node);
@@ -158,6 +168,17 @@ inline void iterate(struct MPINode *node)
 
 	iteration(node->world, &rule_B3S23);
 	++(node->itCounter);
+}
+
+inline static void treadIOError(struct MPINode *node)
+{
+	fprintf(stderr,
+		"Can't write output."
+		"Please make sure you have enough permmissions\n"
+	);
+	nodeAbort(node);
+
+	exit(EXIT_FAILURE);
 }
 
 inline void node_reviveCell(wsize_t x, wsize_t y, struct MPINode *node)

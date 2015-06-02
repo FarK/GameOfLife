@@ -8,13 +8,6 @@
 #include "stats.h"
 #include <omp.h>
 
-struct Parameters {
-	wsize_t x, y;
-	int numThreads;
-	long long unsigned int iterations;
-	int record;
-};
-
 bool processArgs(struct Parameters *params, int argc, char *argv[]);
 void printHelp(char *argv[]);
 void poblateWorld(struct MPINode *node);
@@ -30,8 +23,7 @@ int main(int argc, char *argv[])
 	if(!processArgs(&params, argc, argv))
 		return EXIT_FAILURE;
 
-	node = createNode(params.x, params.y, params.numThreads);
-	if (node == NULL) treadIOError(node);
+	node = createNode(&params);
 
 	poblateWorld(node);
 
@@ -40,14 +32,7 @@ int main(int argc, char *argv[])
 		saveStats(stats);
 	}
 
-	while (params.iterations--) {
-		iterate(node);
-
-		if (params.record) {
-			if (!write(node)) treadIOError(node);
-		}
-	}
-	if (!write(node)) treadIOError(node);
+	run(node);
 
 	deleteNode(node);
 
@@ -131,6 +116,8 @@ bool processArgs(struct Parameters *params, int argc, char *argv[])
 
 	params->record = record;
 
+	if (params->numThreads == 0) params->numThreads = omp_get_max_threads();
+
 	if (
 		params->x == 0 ||
 		params->y == 0 ||
@@ -161,14 +148,3 @@ void printHelp(char *argv[])
 	fprintf(stderr, "\t-i, --iterations <number of iterations>\n");
 	fprintf(stderr, "\t\tNumber of iteratons to do\n");
 }
-
-void treadIOError(struct MPINode *node)
-{
-	fprintf(stderr,
-		"Can't write output. Please make sure you have enough permmissions\n"
-	);
-	nodeAbort(node);
-
-	exit(EXIT_FAILURE);
-}
-
