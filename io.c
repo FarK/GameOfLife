@@ -23,9 +23,13 @@ bool writeBuffer(char *buffer, size_t size, const char *dirName,
 {
 	FILE *file;
 	size_t written;
-	char route[MAX_FILENAME*2 + 1];
+	char *route;
+	size_t routeLenght;
 
-	snprintf(route, MAX_FILENAME*2 + 1, "%s/%s", dirName, filename);
+	routeLenght = strlen(dirName) + strlen(filename) + 2;
+	route = (char *)malloc(routeLenght * sizeof(char));
+
+	snprintf(route,  routeLenght, "%s/%s", dirName, filename);
 
 	file = fopen(route, "w");
 	if (file == NULL) return false;
@@ -33,6 +37,7 @@ bool writeBuffer(char *buffer, size_t size, const char *dirName,
 	written = fwrite(buffer, sizeof(char), size, file);
 	if (written != size) return false;
 
+	free(route);
 	fclose(file);
 
 	return true;
