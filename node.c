@@ -42,12 +42,12 @@ struct MPINode *createNode(const struct Parameters *params)
 	golInit(params->numThreads);
 
 	MPI_Comm_size(MPI_COMM_WORLD, &node->numProc);
+	MPI_Comm_rank(MPI_COMM_WORLD, &node->ownId);
 
 	x = (params->x/(double)node->numProc) + 0.5;
 	y = params->y;
 
 	if (node->numProc > 1) {
-		MPI_Comm_rank(MPI_COMM_WORLD, &node->ownId);
 		node->neighborIds[WB_TOP] =
 			node->ownId? node->ownId - 1 : node->numProc - 1;
 		node->neighborIds[WB_BOTTOM] =(node->ownId + 1) % node->numProc;
