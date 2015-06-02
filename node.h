@@ -2,6 +2,7 @@
 #define NODE_H_
 
 #include "world.h"
+#include "stats.h"
 
 struct Parameters {
 	wsize_t x, y;
@@ -12,7 +13,7 @@ struct Parameters {
 
 struct MPINode;
 
-struct MPINode *createNode(const struct Parameters *params);
+struct MPINode *createNode(const struct Parameters *params, struct Stats *stats);
 void deleteNode(struct MPINode *node);
 void nodeAbort(struct MPINode *node);
 void run(struct MPINode *node);

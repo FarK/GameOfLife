@@ -1,6 +1,7 @@
 #include "node.h"
 #include "gol.h"
 #include "io.h"
+#include "stats.h"
 #include <omp.h>
 #include <stdlib.h>
 #include <mpi.h>
@@ -10,6 +11,7 @@
 struct MPINode {
 	struct World *world;
 	struct GOL *gol;
+	struct Stats *stats;
 	int numProc;
 	int ownId;
 	int neighborIds[2];
@@ -32,7 +34,7 @@ static void receiveBounds(struct MPINode *node);
 static void sendBounds(struct MPINode *node);
 static void treadIOError(struct MPINode *node);
 
-struct MPINode *createNode(const struct Parameters *params)
+struct MPINode *createNode(const struct Parameters *params, struct Stats *stats)
 {
 	struct MPINode *node;
 	wsize_t x, y;
@@ -60,10 +62,13 @@ struct MPINode *createNode(const struct Parameters *params)
 
 	node->iterations = params->iterations;
 	node->itCounter = 0;
+	node->record = params->record;
+	node->stats = stats;
+
 	snprintf(node->dirName, MAX_FILENAME, "node%d", node->ownId);
 	if (!createSubdir(node->dirName)) treadIOError(node);
 
-	node->gol = golInit(params->numThreads, &rule_B3S23, node->world);
+	node->gol = golInit(params->numThreads, &rule_B3S23, node->world,stats);
 
 	return node;
 }
@@ -153,22 +158,48 @@ inline static void sendBounds(struct MPINode *node)
 
 void run(struct MPINode *node)
 {
+	double pTime, itTime;
+
+	pTime = startMeasurement();
+
 	while (node->iterations--) {
+		itTime = startMeasurement();
+
 		iterate(node);
+
+		itTime = endMeasurement(itTime);
+		addIterationTime(itTime, node->stats);
+
 		if (node->record && !write(node)) treadIOError(node);
 	}
 	if (!write(node)) treadIOError(node);
+
+	pTime = endMeasurement(pTime);
+	addProccessTime(pTime, node->stats);
 }
 
 inline static void iterate(struct MPINode *node)
 {
+	double subItTime, commTime;
+
 	if (node->numProc > 1) {
+		commTime = startMeasurement();
+
 		sendBounds(node);
 		receiveBounds(node);
 		clearBoundaries(node->world);
+
+		commTime = endMeasurement(commTime);
+		addCommunicationTime(commTime, node->stats);
 	}
 
+	subItTime = startMeasurement();
+
 	iteration(node->gol);
+
+	subItTime = endMeasurement(subItTime);
+	addSubIterationTime(subItTime, node->stats);
+
 	++(node->itCounter);
 }
 

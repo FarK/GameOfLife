@@ -2,6 +2,7 @@
 #define GOL_H_
 
 #include "world.h"
+#include "stats.h"
 
 #define RULE_1 (1<<0)
 #define RULE_2 (1<<1)
@@ -25,7 +26,7 @@ static const struct Rule rule_B3S23 = {
 };
 
 struct GOL *golInit(unsigned int numThreads, const struct Rule *rule,
-	struct World *world);
+	struct World *world, struct Stats *stats);
 void golEnd(struct GOL *gol);
 void iteration(struct GOL *gol);
 inline void gol_reviveCell(wsize_t x, wsize_t y, struct GOL *gol);

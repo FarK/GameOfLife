@@ -23,16 +23,16 @@ int main(int argc, char *argv[])
 	if(!processArgs(&params, argc, argv))
 		return EXIT_FAILURE;
 
-	node = createNode(&params);
+	stats = createStats(params.iterations, params.numThreads);
+	node = createNode(&params, stats);
 
 	poblateWorld(node);
 
+	run(node);
+
 	if (getNodeId(node) == 0) {
-		stats = createStats(params.iterations, params.numThreads);
 		saveStats(stats);
 	}
-
-	run(node);
 
 	deleteNode(node);
 
