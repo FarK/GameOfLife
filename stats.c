@@ -8,10 +8,9 @@
 
 #define STRLEN(str) (sizeof(str)/sizeof(str[0]) - 1)
 
-#define INT_DIG 4
 #define DEC_DIG 10
-#define DIGS (INT_DIG + DEC_DIG + 1)
-#define PF_FORM "%"TO_STR(INT_DIG)"."TO_STR(DEC_DIG)"f"
+#define DIGS (STRLEN("9.") + DEC_DIG + STRLEN("e+99"))
+#define PF_FORM "%."TO_STR(DEC_DIG)"e"
 
 struct Stats {
 	double avgFactor;
