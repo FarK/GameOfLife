@@ -12,6 +12,7 @@ void freeStats(struct Stats *stats);
 double startMeasurement();
 double endMeasurement(double startTime);
 
+void addProccessTime(double time, struct Stats *stats);
 void addIterationTime(double time, struct Stats *stats);
 void addCommunicationTime(double time, struct Stats *stats);
 void addSubIterationTime(double time, struct Stats *stats);

@@ -17,6 +17,7 @@ struct Stats {
 	double avgFactor;
 	int nThreads;
 
+	double tProccess;
 	double tIteration;
 	double tComunication;
 	double tSubIteration;
@@ -36,6 +37,7 @@ struct Stats *createStats(unsigned long long int iterations, int nThreads)
 
 	stats->avgFactor = 1.0/(double)iterations;
 	stats->nThreads = nThreads;
+	stats->tProccess = 0.0;
 	stats->tIteration = 0.0;
 	stats->tComunication = 0.0;
 	stats->tSubIteration = 0.0;
@@ -66,6 +68,11 @@ inline static void addMeasurement(double *avg, double time,
 	struct Stats *stats)
 {
 	*avg = *avg + stats->avgFactor*time;
+}
+
+inline void addProccessTime(double time, struct Stats *stats)
+{
+	addMeasurement(&stats->tProccess, time, stats);
 }
 
 inline void addIterationTime(double time, struct Stats *stats)
