@@ -9,6 +9,7 @@
 
 struct MPINode {
 	struct World *world;
+	struct GOL *gol;
 	int numProc;
 	int ownId;
 	int neighborIds[2];
@@ -39,7 +40,6 @@ struct MPINode *createNode(const struct Parameters *params)
 	node = (struct MPINode *)malloc(sizeof(struct MPINode));
 
 	MPI_Init(NULL, NULL);
-	golInit(params->numThreads);
 
 	MPI_Comm_size(MPI_COMM_WORLD, &node->numProc);
 	MPI_Comm_rank(MPI_COMM_WORLD, &node->ownId);
@@ -63,13 +63,15 @@ struct MPINode *createNode(const struct Parameters *params)
 	snprintf(node->dirName, MAX_FILENAME, "node%d", node->ownId);
 	if (!createSubdir(node->dirName)) treadIOError(node);
 
+	node->gol = golInit(params->numThreads, &rule_B3S23, node->world);
+
 	return node;
 }
 
 inline static void freeNode(struct MPINode *node)
 {
 	destroyWorld(node->world);
-	golEnd();
+	golEnd(node->gol);
 	free(node);
 }
 
@@ -166,7 +168,7 @@ inline static void iterate(struct MPINode *node)
 		clearBoundaries(node->world);
 	}
 
-	iteration(node->world, &rule_B3S23);
+	iteration(node->gol);
 	++(node->itCounter);
 }
 
@@ -183,12 +185,12 @@ inline static void treadIOError(struct MPINode *node)
 
 inline void node_reviveCell(wsize_t x, wsize_t y, struct MPINode *node)
 {
-	gol_reviveCell(x, y, node->world);
+	gol_reviveCell(x, y, node->gol);
 }
 
 inline void node_killCell(wsize_t x, wsize_t y, struct MPINode *node)
 {
-	gol_killCell(x, y, node->world);
+	gol_killCell(x, y, node->gol);
 }
 
 bool write(struct MPINode *node)

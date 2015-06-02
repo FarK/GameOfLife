@@ -11,83 +11,96 @@ enum CellProcessing{
 	GOL_KEEP_DEAD
 };
 
-static struct list_head *toRevive;
-static struct list_head *toKill;
+struct GOL {
+	struct World *world;
+	struct list_head *toRevive;
+	struct list_head *toKill;
+	const struct Rule *rule;
+	unsigned int numThreads;
+};
 
 static enum CellProcessing checkRule(struct Cell *cell,const struct Rule *rule);
 static bool checkSubrule(unsigned char subrule, unsigned char aliveCounter);
 
-void golInit(unsigned int numThreads)
+struct GOL *golInit(unsigned int numThreads, const struct Rule *rule,
+	struct World *world)
 {
 	unsigned int i;
-
-	omp_set_num_threads(numThreads);
+	struct GOL *gol;
 
 	// Allocate memory
-	toRevive = (struct list_head *)
+	gol = (struct GOL *)malloc(sizeof(struct GOL));
+	gol->toRevive = (struct list_head *)
 		malloc(numThreads * sizeof(struct list_head));
-	toKill = (struct list_head *)
+	gol->toKill = (struct list_head *)
 		malloc(numThreads * sizeof(struct list_head));
+
+	gol->rule = rule;
+	gol->world = world;
+	gol->numThreads = numThreads;
 
 	// Initialize lists
 	for (i = 0; i < numThreads; ++i) {
-		INIT_LIST_HEAD(&toRevive[i]);
-		INIT_LIST_HEAD(&toKill[i]);
+		INIT_LIST_HEAD(&gol->toRevive[i]);
+		INIT_LIST_HEAD(&gol->toKill[i]);
 	}
+
+	omp_set_num_threads(numThreads);
+
+	return gol;
 }
 
-void golEnd()
+void golEnd(struct GOL *gol)
 {
-	free(toRevive);
-	free(toKill);
+	free(gol->toRevive);
+	free(gol->toKill);
+	free(gol);
 }
 
-void iteration(struct World *world, const struct Rule *rule)
+void iteration(struct GOL *gol)
 {
 	struct Cell *cell;
 	unsigned int i;
 	unsigned int count;
-	unsigned int threadNum, numThreads;
+	unsigned int threadNum;
 
 	// TODO: it can be multithread?
-	reviveCells(&toRevive[0], world);
-	killCells(&toKill[0], world);
+	reviveCells(&gol->toRevive[0], gol->world);
+	killCells(&gol->toKill[0], gol->world);
 
-	#pragma omp parallel shared(toRevive, toKill, world, numThreads, rule)\
-	                     private(cell, count, threadNum)
+	#pragma omp parallel shared(gol) private(cell, count, threadNum)
 	{
-		numThreads = omp_get_num_threads();
 		threadNum = omp_get_thread_num();
 
-		for (cell = wit_first_split(&count, threadNum, world);
-		     wit_done_split(count, world);
-		     cell = wit_next_split(cell, &count, numThreads))
+		for (cell = wit_first_split(&count, threadNum, gol->world);
+		     wit_done_split(count, gol->world);
+		     cell = wit_next_split(cell, &count, gol->numThreads))
 		{
-			switch (checkRule(cell, rule)) {
-				case GOL_REVIVE:
-					addToList(cell, &toRevive[threadNum]);
-					break;
-				case GOL_KILL:
-					addToList(cell, &toKill[threadNum]);
-					break;
-				case GOL_SURVIVE:
-				case GOL_KEEP_DEAD:
-				default:
-					break;
+			switch (checkRule(cell, gol->rule)) {
+			case GOL_REVIVE:
+				addToList(cell, &gol->toRevive[threadNum]);
+				break;
+			case GOL_KILL:
+				addToList(cell, &gol->toKill[threadNum]);
+				break;
+			case GOL_SURVIVE:
+			case GOL_KEEP_DEAD:
+			default:
+				break;
 			}
 		}
 	}
 
 	// Add lists
-	for (i = 0; i < numThreads; ++i) {
-		reviveCells(&toRevive[i], world);
-		freeList(&toRevive[i]);
+	for (i = 0; i < gol->numThreads; ++i) {
+		reviveCells(&gol->toRevive[i], gol->world);
+		freeList(&gol->toRevive[i]);
 	}
 
 	// Free lists
-	for (i = 0; i < numThreads; ++i) {
-		killCells(&toKill[i], world);
-		freeList(&toKill[i]);
+	for (i = 0; i < gol->numThreads; ++i) {
+		killCells(&gol->toKill[i], gol->world);
+		freeList(&gol->toKill[i]);
 	}
 }
 
@@ -140,12 +153,12 @@ inline static bool checkSubrule(unsigned char subrule,
 	return satisfy;
 }
 
-inline void gol_reviveCell(wsize_t x, wsize_t y, struct World *world)
+inline void gol_reviveCell(wsize_t x, wsize_t y, struct GOL *gol)
 {
-	addToList_coords(x, y, true, &toRevive[0], world);
+	addToList_coords(x, y, true, &gol->toRevive[0], gol->world);
 }
 
-inline void gol_killCell(wsize_t x, wsize_t y, struct World *world)
+inline void gol_killCell(wsize_t x, wsize_t y, struct GOL *gol)
 {
-	addToList_coords(x, y, false, &toRevive[0], world);
+	addToList_coords(x, y, false, &gol->toRevive[0], gol->world);
 }
