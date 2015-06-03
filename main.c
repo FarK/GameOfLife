@@ -4,13 +4,14 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <getopt.h>
+#include <time.h>
 #include "node.h"
 #include "stats.h"
 #include <omp.h>
 
 bool processArgs(struct Parameters *params, int argc, char *argv[]);
 void printHelp(char *argv[]);
-void poblateWorld(struct MPINode *node);
+void poblateWorld(struct MPINode *node, struct Parameters *params);
 
 void treadIOError(struct MPINode *node);
 
@@ -19,6 +20,8 @@ int main(int argc, char *argv[])
 	struct MPINode *node;
 	struct Parameters params;
 	struct Stats *stats, *avgStats;
+
+	srand(time(NULL));
 
 	if(!processArgs(&params, argc, argv))
 		return EXIT_FAILURE;
@@ -29,7 +32,7 @@ int main(int argc, char *argv[])
 	avgStats = createStats(params.iterations, params.numThreads);
 	node = createNode(&params, stats);
 
-	poblateWorld(node);
+	poblateWorld(node, &params);
 
 	run(node);
 
@@ -46,16 +49,31 @@ int main(int argc, char *argv[])
 	return EXIT_SUCCESS;
 }
 
-void poblateWorld(struct MPINode *node)
+void poblateWorld(struct MPINode *node, struct Parameters *params)
 {
 	int nodeId = getNodeId(node);
+	int numProc = getNumProc(node);
+	wsize_t x, y;
+	long long unsigned int i;
 
-	if (nodeId == 0) {
-		node_reviveCell(2,7, node);
-		node_reviveCell(2,8, node);
-		node_reviveCell(2,9, node);
-		node_reviveCell(3,7, node);
-		node_reviveCell(4,8, node);
+	if (params->cells == 0) {
+		if (nodeId == 0) {
+			// Glider pattern
+			node_reviveCell(2,7, node);
+			node_reviveCell(2,8, node);
+			node_reviveCell(2,9, node);
+			node_reviveCell(3,7, node);
+			node_reviveCell(4,8, node);
+		}
+	} else {
+		for (i = 0; i < params->cells; ++i) {
+			if (nodeId == rand()%numProc) {
+				x = rand()%params->x;
+				y = rand()%params->y;
+
+				node_reviveCell(x,y, node);
+			}
+		}
 	}
 }
 
@@ -68,6 +86,7 @@ bool processArgs(struct Parameters *params, int argc, char *argv[])
 		{"size",       required_argument, NULL,    's'},
 		{"threads",    required_argument, NULL,    't'},
 		{"iterations", required_argument, NULL,    'i'},
+		{"cells",      optional_argument, NULL,    'c'},
 		{"record",     no_argument,       &record,  1 },
 		{0, 0, 0, 0}
 	};
@@ -81,9 +100,10 @@ bool processArgs(struct Parameters *params, int argc, char *argv[])
 	params->y = 0;
 	params->numThreads = -1;
 	params->iterations = 0;
+	params->cells = 0;
 
 	while(1) {
-		opt = getopt_long(argc, argv, "s:t:i:r", options, &optIdx);
+		opt = getopt_long(argc, argv, "s:t:i:c::r", options, &optIdx);
 		if (opt == -1) break;
 
 		switch (opt) {
@@ -108,7 +128,13 @@ bool processArgs(struct Parameters *params, int argc, char *argv[])
 
 			case 'i':
 				params->iterations =
-					(int)strtol(optarg, NULL, 10);
+					(long long int)strtol(optarg, NULL, 10);
+				if (errno == ERANGE) goto error;
+				break;
+
+			case 'c':
+				params->cells =
+					(long long int)strtol(optarg, NULL, 10);
 				if (errno == ERANGE) goto error;
 				break;
 
@@ -142,7 +168,13 @@ error:	printHelp(argv);
 void printHelp(char *argv[])
 {
 	fprintf(stderr,
-		"Usage: %s --size <x size>x<y size> --threads <num of threads> --iterations <number of iterations>\n",
+		"Usage: %s "
+		"--size <x>x<y> "
+		"--threads <number> "
+		"--iterations <number> "
+		"[--cells <number>] "
+		"[--record]"
+		"\n",
 		argv[0]
 	);
 
@@ -153,5 +185,11 @@ void printHelp(char *argv[])
 	fprintf(stderr, "\t\tNumber of thread to use. If 0, max possible threads will be selected\n\n");
 
 	fprintf(stderr, "\t-i, --iterations <number of iterations>\n");
-	fprintf(stderr, "\t\tNumber of iteratons to do\n");
+	fprintf(stderr, "\t\tNumber of iteratons to do\n\n");
+
+	fprintf(stderr, "\t-c, --cells <number of cells>\n");
+	fprintf(stderr, "\t\tNumber of random cells to create. If it is not set, a glider patter will be set\n\n");
+
+	fprintf(stderr, "\t-r, --record\n");
+	fprintf(stderr, "\t\tSave each iterations. CAUTION: Do not use with bigs worlds\n\n");
 }

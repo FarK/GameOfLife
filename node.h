@@ -9,6 +9,7 @@ struct Parameters {
 	int numThreads;
 	long long unsigned int iterations;
 	int record;
+	long long unsigned int cells;
 };
 
 struct MPINode;
