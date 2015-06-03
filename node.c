@@ -256,3 +256,72 @@ inline int getNodeId(struct MPINode *node)
 {
 	return node->ownId;
 }
+
+void statsAvg(struct Stats *outStats, struct MPINode *node)
+{
+	int i;
+	double *sendBuff;
+	double *recvBuff, *recvP;
+	size_t sendCount = 6 + node->stats->nThreads;
+	size_t recvCount = sendCount * node->numProc;
+
+	// Allocate buffers
+	sendBuff = (double *)malloc(sendCount * sizeof(double));
+	recvBuff = (double *)malloc(recvCount * sizeof(double));
+	recvP = recvBuff;
+
+	// Prepare send buffer
+	sendBuff[0] = node->stats->total;
+	sendBuff[1] = node->stats->mpiIteration;
+	sendBuff[2] = node->stats->communication;
+	sendBuff[3] = node->stats->ompIteration;
+	sendBuff[4] = node->stats->cellChecking;
+	sendBuff[5] = node->stats->worldUpdate;
+	for (i = 0; i < node->stats->nThreads; ++i)
+		sendBuff[6 + i] = node->stats->threads[i];
+
+	// Receive all stats
+	MPI_Gather(
+		sendBuff, sendCount, MPI_DOUBLE,
+		recvBuff, sendCount, MPI_DOUBLE,
+		0, MPI_COMM_WORLD
+	);
+
+	// Calculate average
+	outStats->total         = 0;
+	outStats->mpiIteration  = 0;
+	outStats->communication = 0;
+	outStats->ompIteration  = 0;
+	outStats->cellChecking  = 0;
+	outStats->worldUpdate   = 0;
+	for (i = 0; i < node->stats->nThreads; ++i)
+		outStats->threads[i] = 0;
+
+	if (node->ownId == 0) {
+		while(recvCount) {
+			outStats->total         += recvP[0];
+			outStats->mpiIteration  += recvP[1];
+			outStats->communication += recvP[2];
+			outStats->ompIteration  += recvP[3];
+			outStats->cellChecking  += recvP[4];
+			outStats->worldUpdate   += recvP[5];
+			for (i = 0; i < node->stats->nThreads; ++i)
+				outStats->threads[i] += recvP[6 + i];
+
+			recvP += sendCount;
+			recvCount -= sendCount;
+		}
+	}
+
+	outStats->total         /= 2.0;
+	outStats->mpiIteration  /= 2.0;
+	outStats->communication /= 2.0;
+	outStats->ompIteration  /= 2.0;
+	outStats->cellChecking  /= 2.0;
+	outStats->worldUpdate   /= 2.0;
+	for (i = 0; i < node->stats->nThreads; ++i)
+		outStats->threads[i] /= 2.0;
+
+	free(sendBuff);
+	free(recvBuff);
+}

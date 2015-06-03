@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 {
 	struct MPINode *node;
 	struct Parameters params;
-	struct Stats *stats;
+	struct Stats *stats, *avgStats;
 
 	if(!processArgs(&params, argc, argv))
 		return EXIT_FAILURE;
@@ -26,16 +26,20 @@ int main(int argc, char *argv[])
 	MPI_Init(NULL, NULL);
 
 	stats = createStats(params.iterations, params.numThreads);
+	avgStats = createStats(params.iterations, params.numThreads);
 	node = createNode(&params, stats);
 
 	poblateWorld(node);
 
 	run(node);
 
+	statsAvg(avgStats, node);
 	if (getNodeId(node) == 0) {
-		saveStats(stats);
+		saveStats(avgStats);
 	}
 
+	freeStats(stats);
+	freeStats(avgStats);
 	deleteNode(node);
 	MPI_Finalize();
 

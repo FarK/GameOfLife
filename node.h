@@ -22,4 +22,6 @@ void node_killCell(wsize_t x, wsize_t y, struct MPINode *node);
 int getNodeId(struct MPINode *node);
 bool write(struct MPINode *node);
 
+void statsAvg(struct Stats *outStats, struct MPINode *node);
+
 #endif
