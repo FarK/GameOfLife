@@ -25,7 +25,6 @@ struct MPINode {
 };
 
 static void iterate(struct MPINode *node);
-static void freeNode(struct MPINode *node);
 static bool receiveBound(enum WorldBound bound, enum BoundaryType btype,
 	struct MPINode *node);
 static bool sendBound(enum WorldBound bound, enum BoundaryType btype,
@@ -40,8 +39,6 @@ struct MPINode *createNode(const struct Parameters *params, struct Stats *stats)
 	wsize_t x, y;
 
 	node = (struct MPINode *)malloc(sizeof(struct MPINode));
-
-	MPI_Init(NULL, NULL);
 
 	MPI_Comm_size(MPI_COMM_WORLD, &node->numProc);
 	MPI_Comm_rank(MPI_COMM_WORLD, &node->ownId);
@@ -73,22 +70,16 @@ struct MPINode *createNode(const struct Parameters *params, struct Stats *stats)
 	return node;
 }
 
-inline static void freeNode(struct MPINode *node)
+void deleteNode(struct MPINode *node)
 {
 	destroyWorld(node->world);
 	golEnd(node->gol);
 	free(node);
 }
 
-void deleteNode(struct MPINode *node)
-{
-	freeNode(node);
-	MPI_Finalize();
-}
-
 inline void nodeAbort(struct MPINode *node)
 {
-	if (node) freeNode(node);
+	if (node) deleteNode(node);
 	MPI_Abort(MPI_COMM_WORLD, -1);
 }
 

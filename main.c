@@ -23,6 +23,8 @@ int main(int argc, char *argv[])
 	if(!processArgs(&params, argc, argv))
 		return EXIT_FAILURE;
 
+	MPI_Init(NULL, NULL);
+
 	stats = createStats(params.iterations, params.numThreads);
 	node = createNode(&params, stats);
 
@@ -35,6 +37,7 @@ int main(int argc, char *argv[])
 	}
 
 	deleteNode(node);
+	MPI_Finalize();
 
 	return EXIT_SUCCESS;
 }
