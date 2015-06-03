@@ -12,6 +12,7 @@ struct MPINode {
 	struct World *world;
 	struct GOL *gol;
 	struct Stats *stats;
+	const struct Parameters *params;
 	int numProc;
 	int ownId;
 	int neighborIds[2];
@@ -19,8 +20,7 @@ struct MPINode {
 	struct Boundary *RXboundary;
 	struct Boundary *TXboundary;
 
-	long long unsigned int itCounter, iterations;
-	bool record;
+	long long unsigned int itCounter;
 	char dirName[MAX_FILENAME];
 };
 
@@ -57,9 +57,8 @@ struct MPINode *createNode(const struct Parameters *params, struct Stats *stats)
 	} else
 		node->world = createWorld(params->x, params->y, false);
 
-	node->iterations = params->iterations;
 	node->itCounter = 0;
-	node->record = params->record;
+	node->params = params;
 	node->stats = stats;
 
 	snprintf(node->dirName, MAX_FILENAME, "node%d", node->ownId);
@@ -153,14 +152,18 @@ void run(struct MPINode *node)
 
 	pTime = startMeasurement();
 
-	while (node->iterations--) {
+	for (
+		node->itCounter = 0;
+		node->itCounter <= node->params->iterations;
+		++(node->itCounter)
+	) {
 		itTime = startMeasurement();
 
 		iterate(node);
 
 		endMeasurement(itTime, mpiIteration, node->stats);
 
-		if (node->record && !write(node)) treadIOError(node);
+		if (node->params->record && !write(node)) treadIOError(node);
 	}
 
 	endMeasurement(pTime, total, node->stats);
@@ -185,8 +188,6 @@ inline static void iterate(struct MPINode *node)
 	iteration(node->gol);
 
 	endMeasurement(subItTime, ompIteration, node->stats);
-
-	++(node->itCounter);
 }
 
 inline static void treadIOError(struct MPINode *node)
