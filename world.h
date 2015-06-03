@@ -52,7 +52,7 @@ struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world);
 char getCellRefs(struct Cell *cell);
 char dgetCellRefs(wsize_t x, wsize_t y, const struct World *world);
 bool isCellAlive(const struct Cell *cell);
-inline bool isCellAlive_coord(wsize_t x, wsize_t y, const struct World *world);
+bool isCellAlive_coord(wsize_t x, wsize_t y, const struct World *world);
 
 void getBoundaries(struct Boundary **tx, struct Boundary **rx,
 	const struct World *world);

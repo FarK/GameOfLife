@@ -29,7 +29,7 @@ struct GOL *golInit(unsigned int numThreads, const struct Rule *rule,
 	struct World *world, struct Stats *stats);
 void golEnd(struct GOL *gol);
 void iteration(struct GOL *gol);
-inline void gol_reviveCell(wsize_t x, wsize_t y, struct GOL *gol);
-inline void gol_killCell(wsize_t x, wsize_t y, struct GOL *gol);
+void gol_reviveCell(wsize_t x, wsize_t y, struct GOL *gol);
+void gol_killCell(wsize_t x, wsize_t y, struct GOL *gol);
 
 #endif
