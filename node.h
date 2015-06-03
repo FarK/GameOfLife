@@ -19,6 +19,7 @@ void nodeAbort(struct MPINode *node);
 void run(struct MPINode *node);
 void node_reviveCell(wsize_t x, wsize_t y, struct MPINode *node);
 void node_killCell(wsize_t x, wsize_t y, struct MPINode *node);
+int getNumProc(struct MPINode *node);
 int getNodeId(struct MPINode *node);
 bool write(struct MPINode *node);
 

@@ -253,6 +253,11 @@ bool write(struct MPINode *node)
 	return ret;
 }
 
+inline int getNumProc(struct MPINode *node)
+{
+	return node->numProc;
+}
+
 inline int getNodeId(struct MPINode *node)
 {
 	return node->ownId;
