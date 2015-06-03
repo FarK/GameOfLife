@@ -7,11 +7,13 @@ struct Stats {
 	double avgFactor;
 	int nThreads;
 
-	double tProccess;
-	double tIteration;
-	double tComunication;
-	double tSubIteration;
-	double *tThreads;
+	double total;
+	double mpiIteration;
+	double communication;
+	double ompIteration;
+	double cellChecking;
+	double worldUpdate;
+	double *threads;
 };
 
 

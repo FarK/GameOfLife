@@ -66,17 +66,18 @@ void iteration(struct GOL *gol)
 	unsigned int i;
 	unsigned int count;
 	unsigned int threadNum;
-	double thTime;
+	double ccTime, wupTime, thTime;
 
 	// TODO: it can be multithread?
 	reviveCells(&gol->toRevive[0], gol->world);
 	killCells(&gol->toKill[0], gol->world);
 
+	ccTime = startMeasurement();
 	#pragma omp parallel shared(gol) private(cell, count, threadNum, thTime)
 	{
-		threadNum = omp_get_thread_num();
-
 		thTime = startMeasurement();
+
+		threadNum = omp_get_thread_num();
 
 		for (cell = wit_first_split(&count, threadNum, gol->world);
 		     wit_done_split(count, gol->world);
@@ -96,9 +97,11 @@ void iteration(struct GOL *gol)
 			}
 		}
 
-		endMeasurement(thTime, tThreads[threadNum], gol->stats);
+		endMeasurement(thTime, threads[threadNum], gol->stats);
 	}
+	endMeasurement(ccTime, cellChecking, gol->stats);
 
+	wupTime = startMeasurement();
 	// Add lists
 	for (i = 0; i < gol->numThreads; ++i) {
 		reviveCells(&gol->toRevive[i], gol->world);
@@ -110,6 +113,7 @@ void iteration(struct GOL *gol)
 		killCells(&gol->toKill[i], gol->world);
 		freeList(&gol->toKill[i]);
 	}
+	endMeasurement(wupTime, worldUpdate, gol->stats);
 }
 
 enum CellProcessing checkRule(struct Cell *cell, const struct Rule *rule)

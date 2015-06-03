@@ -19,24 +19,27 @@ struct Stats *createStats(unsigned long long int iterations, int nThreads)
 	struct Stats *stats;
 
 	stats = (struct Stats *)malloc(sizeof(struct Stats));
-	stats->tThreads = (double *)malloc(nThreads * sizeof(double));
+	stats->threads = (double *)malloc(nThreads * sizeof(double));
 
 	stats->avgFactor = 1.0/(double)iterations;
 	stats->nThreads = nThreads;
-	stats->tProccess = 0.0;
-	stats->tIteration = 0.0;
-	stats->tComunication = 0.0;
-	stats->tSubIteration = 0.0;
+
+	stats->total = 0.0;
+	stats->mpiIteration = 0.0;
+	stats->communication = 0.0;
+	stats->ompIteration = 0.0;
+	stats->cellChecking = 0.0;
+	stats->worldUpdate = 0.0;
 
 	for (i = 0; i < nThreads; ++i)
-		stats->tThreads[i] = 0.0;
+		stats->threads[i] = 0.0;
 
 	return stats;
 }
 
 void freeStats(struct Stats *stats)
 {
-	free(stats->tThreads);
+	free(stats->threads);
 	free(stats);
 }
 
@@ -47,26 +50,32 @@ bool saveStats(struct Stats *stats)
 	size_t maxBuffSize, maxLineSize;
 	int written;
 
-	maxLineSize = STRLEN("Communications\t\t" "\n") + DIGS;
-	maxBuffSize = (3 + stats->nThreads)*maxLineSize;
+	maxLineSize = STRLEN("            Thread9      \n") + DIGS;
+	maxBuffSize = (6 + stats->nThreads)*maxLineSize + 1;
 	buffer = (char *)malloc(maxBuffSize * sizeof(char));
 	pBuffer = buffer;
 
 	written = snprintf(pBuffer, maxBuffSize,
-		"Iterations\t\t" PF_FORM "\n"
-		"Communications\t\t" PF_FORM "\n"
-		"SubIteration\t\t" PF_FORM "\n",
-		stats->tIteration,
-		stats->tComunication,
-		stats->tSubIteration
+		"Total                    " PF_FORM "\n"
+		"   MPI Iteration         " PF_FORM "\n"
+		"      Communication      " PF_FORM "\n"
+		"      OMP Iteration      " PF_FORM "\n"
+		"         Cell checking   " PF_FORM "\n"
+		"         World Update    " PF_FORM "\n",
+		stats->total,
+		stats->mpiIteration,
+		stats->communication,
+		stats->ompIteration,
+		stats->cellChecking,
+		stats->worldUpdate
 	);
 	pBuffer = buffer + written;
 
 	for (i = 0; i < stats->nThreads; ++i) {
 		written += snprintf(pBuffer, maxBuffSize - written,
-			"Thread%d\t\t" PF_FORM "\n",
+			"            Thread%d      " PF_FORM "\n",
 			i,
-			stats->tThreads[i]
+			stats->threads[i]
 		);
 		pBuffer = buffer + written;
 	}
