@@ -246,17 +246,21 @@ void reviveCell(wsize_t x, wsize_t y, struct World *world)
 	struct Cell *cell;
 	unsigned bound = NB_ALL;
 
+	cell = world->grid[x][y];
+
 	if (world->limits) {
 		if (x == 0) {
-			addToBoundary(y, WB_TOP, TO_REVIVE, world->TXBoundary);
+			if (cell != NULL && !cell->alive)
+				addToBoundary(y, WB_TOP, TO_REVIVE,
+						world->TXBoundary);
 			bound = NB_TOP | NB_MID;
 		} else if (x == world->x-1) {
-			addToBoundary(y, WB_BOTTOM, TO_REVIVE, world->TXBoundary);
+			if (cell != NULL && !cell->alive)
+				addToBoundary(y, WB_BOTTOM, TO_REVIVE,
+						world->TXBoundary);
 			bound = NB_BOT | NB_MID;
 		}
 	}
-
-	cell = world->grid[x][y];
 
 	if (cell == NULL) {
 		cell = newCell(x, y, 0, true);
@@ -282,17 +286,21 @@ void killCell(wsize_t x, wsize_t y, struct World *world)
 	struct Cell *cell;
 	unsigned bound = NB_ALL;
 
+	cell = world->grid[x][y];
+
 	if (world->limits) {
 		if (x == 0) {
-			addToBoundary(y, WB_TOP, TO_KILL, world->TXBoundary);
+			if (cell == NULL || !cell->alive)
+				addToBoundary(y, WB_TOP, TO_KILL,
+						world->TXBoundary);
 			bound = NB_TOP | NB_MID;
 		} else if (x == world->x-1) {
-			addToBoundary(y, WB_BOTTOM, TO_KILL, world->TXBoundary);
+			if (cell == NULL || !cell->alive)
+				addToBoundary(y, WB_BOTTOM, TO_KILL,
+						world->TXBoundary);
 			bound = NB_BOT | NB_MID;
 		}
 	}
-
-	cell = world->grid[x][y];
 
 	setNeighbor(x, y, bound, decRef, world);
 	if (cell != NULL && cell->alive) {
@@ -370,7 +378,7 @@ void setBoundary(enum WorldBound bound, enum BoundaryType btype,
 	};
 
 	for (i = 0; i < bsize; i++) {
-		y_coord = world->RXBoundary->boundaries[bound][btype][i],
+		y_coord = world->RXBoundary->boundaries[bound][btype][i];
 		setNeighbor(x_coord, y_coord, neighborBounds, setRef, world);
 	}
 }
