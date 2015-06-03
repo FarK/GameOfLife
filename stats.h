@@ -3,20 +3,25 @@
 
 #include <stdbool.h>
 
-struct Stats;
+struct Stats {
+	double avgFactor;
+	int nThreads;
+
+	double tProccess;
+	double tIteration;
+	double tComunication;
+	double tSubIteration;
+	double *tThreads;
+};
 
 
 struct Stats *createStats(unsigned long long int iterations, int nThreads);
 void freeStats(struct Stats *stats);
 
-double startMeasurement();
-double endMeasurement(double startTime);
+#define startMeasurement() omp_get_wtime()
 
-void addProccessTime(double time, struct Stats *stats);
-void addIterationTime(double time, struct Stats *stats);
-void addCommunicationTime(double time, struct Stats *stats);
-void addSubIterationTime(double time, struct Stats *stats);
-void addThreadTime(double time, int threadNum, struct Stats *stats);
+#define endMeasurement(time, stName, stats)\
+	(stats)->stName = (stats)->stName + (stats)->avgFactor*(omp_get_wtime()-(time))
 
 bool saveStats(struct Stats *stats);
 

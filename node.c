@@ -167,14 +167,12 @@ void run(struct MPINode *node)
 
 		iterate(node);
 
-		itTime = endMeasurement(itTime);
-		addIterationTime(itTime, node->stats);
+		endMeasurement(itTime, tIteration, node->stats);
 
 		if (node->record && !write(node)) treadIOError(node);
 	}
 
-	pTime = endMeasurement(pTime);
-	addProccessTime(pTime, node->stats);
+	endMeasurement(pTime, tProccess, node->stats);
 }
 
 inline static void iterate(struct MPINode *node)
@@ -188,16 +186,14 @@ inline static void iterate(struct MPINode *node)
 		receiveBounds(node);
 		clearBoundaries(node->world);
 
-		commTime = endMeasurement(commTime);
-		addCommunicationTime(commTime, node->stats);
+		endMeasurement(commTime, tComunication, node->stats);
 	}
 
 	subItTime = startMeasurement();
 
 	iteration(node->gol);
 
-	subItTime = endMeasurement(subItTime);
-	addSubIterationTime(subItTime, node->stats);
+	endMeasurement(subItTime, tSubIteration, node->stats);
 
 	++(node->itCounter);
 }

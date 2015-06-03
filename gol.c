@@ -96,8 +96,7 @@ void iteration(struct GOL *gol)
 			}
 		}
 
-		thTime = endMeasurement(thTime);
-		addThreadTime(thTime, threadNum, gol->stats);
+		endMeasurement(thTime, tThreads[threadNum], gol->stats);
 	}
 
 	// Add lists

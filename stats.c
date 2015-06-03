@@ -12,19 +12,6 @@
 #define DIGS (STRLEN("9.") + DEC_DIG + STRLEN("e+99"))
 #define PF_FORM "%."TO_STR(DEC_DIG)"e"
 
-struct Stats {
-	double avgFactor;
-	int nThreads;
-
-	double tProccess;
-	double tIteration;
-	double tComunication;
-	double tSubIteration;
-	double *tThreads;
-};
-
-static void addMeasurement(double *avg, double time,
-	struct Stats *stats);
 
 struct Stats *createStats(unsigned long long int iterations, int nThreads)
 {
@@ -51,47 +38,6 @@ void freeStats(struct Stats *stats)
 {
 	free(stats->tThreads);
 	free(stats);
-}
-
-inline double startMeasurement()
-{
-	return omp_get_wtime();
-}
-
-inline double endMeasurement(double startTime)
-{
-	return omp_get_wtime() - startTime;
-}
-
-inline static void addMeasurement(double *avg, double time,
-	struct Stats *stats)
-{
-	*avg = *avg + stats->avgFactor*time;
-}
-
-inline void addProccessTime(double time, struct Stats *stats)
-{
-	addMeasurement(&stats->tProccess, time, stats);
-}
-
-inline void addIterationTime(double time, struct Stats *stats)
-{
-	addMeasurement(&stats->tIteration, time, stats);
-}
-
-inline void addCommunicationTime(double time, struct Stats *stats)
-{
-	addMeasurement(&stats->tComunication, time, stats);
-}
-
-inline void addSubIterationTime(double time, struct Stats *stats)
-{
-	addMeasurement(&stats->tSubIteration, time, stats);
-}
-
-inline void addThreadTime(double time, int threadNum, struct Stats *stats)
-{
-	addMeasurement(&stats->tThreads[threadNum], time, stats);
 }
 
 bool saveStats(struct Stats *stats)
