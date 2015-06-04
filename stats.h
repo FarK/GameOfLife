@@ -26,6 +26,10 @@ void freeStats(struct Stats *stats);
 	(stats)->stName = (stats)->stName + (stats)->avgFactor*(omp_get_wtime()-(time))
 
 bool saveStats(struct Stats *stats);
-bool saveStatsGnuplot(struct Stats *stats);
+bool saveStatsGnuplot(
+	long long unsigned int iterations,
+	long long unsigned int size,
+	long long unsigned int cells,
+	struct Stats *stats);
 
 #endif

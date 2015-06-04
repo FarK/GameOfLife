@@ -81,7 +81,60 @@ bool saveStats(struct Stats *stats)
 		pBuffer = buffer + written;
 	}
 
-	writeBuffer(buffer, written, "./", "stats");
+	writeBuffer(buffer, written, "./", "stats", "w");
+	free(buffer);
+
+	return true;
+}
+
+bool saveStatsGnuplot(
+	long long unsigned int iterations,
+	long long unsigned int size,
+	long long unsigned int cells,
+	struct Stats *stats
+) {
+	int i;
+	char *buffer, *pBuffer;
+	size_t maxBuffSize;
+	int written = 0;
+
+	maxBuffSize = 3*20 + (6 + stats->nThreads + 1)*DIGS + 1;
+	buffer = (char *)mallocC(maxBuffSize * sizeof(char));
+	pBuffer = buffer;
+
+	written += sprintf(pBuffer,
+		"%Lu\t"
+		"%Lu\t"
+		"%Lu\t"
+		PF_FORM "\t"
+		PF_FORM "\t"
+		PF_FORM "\t"
+		PF_FORM "\t"
+		PF_FORM "\t"
+		PF_FORM "\t",
+
+		iterations,
+		size,
+		cells,
+		stats->total,
+		stats->mpiIteration,
+		stats->communication,
+		stats->ompIteration,
+		stats->cellChecking,
+		stats->worldUpdate
+	);
+	pBuffer = buffer + written;
+
+	for (i = 0; i < stats->nThreads; ++i) {
+		written +=
+			sprintf(pBuffer, PF_FORM "\t", stats->threads[i]);
+		pBuffer = buffer + written;
+	}
+
+	written += sprintf(pBuffer, "\n");
+	pBuffer = buffer + written;
+
+	writeBuffer(buffer, written, "./", "stats.data", "a");
 	free(buffer);
 
 	return true;
