@@ -1,6 +1,7 @@
 #include "gol.h"
 #include "world.h"
 #include "list.h"
+#include "malloc.h"
 #include <stdlib.h>
 #include <omp.h>
 
@@ -31,11 +32,11 @@ struct GOL *golInit(unsigned int numThreads, const struct Rule *rule,
 	struct GOL *gol;
 
 	// Allocate memory
-	gol = (struct GOL *)malloc(sizeof(struct GOL));
+	gol = (struct GOL *)mallocC(sizeof(struct GOL));
 	gol->toRevive = (struct list_head *)
-		malloc(numThreads * sizeof(struct list_head));
+		mallocC(numThreads * sizeof(struct list_head));
 	gol->toKill = (struct list_head *)
-		malloc(numThreads * sizeof(struct list_head));
+		mallocC(numThreads * sizeof(struct list_head));
 
 	gol->rule = rule;
 	gol->world = world;

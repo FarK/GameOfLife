@@ -2,6 +2,7 @@
 #include "gol.h"
 #include "io.h"
 #include "stats.h"
+#include "malloc.h"
 #include <omp.h>
 #include <stdlib.h>
 #include <mpi.h>
@@ -38,7 +39,7 @@ struct MPINode *createNode(const struct Parameters *params, struct Stats *stats)
 	struct MPINode *node;
 	wsize_t x, y;
 
-	node = (struct MPINode *)malloc(sizeof(struct MPINode));
+	node = (struct MPINode *)mallocC(sizeof(struct MPINode));
 
 	MPI_Comm_size(MPI_COMM_WORLD, &node->numProc);
 	MPI_Comm_rank(MPI_COMM_WORLD, &node->ownId);
@@ -224,7 +225,7 @@ bool write(struct MPINode *node)
 	getSize(&x, &y, node->world);
 	buffSize = x*(y*2 + 1) + 2;
 
-	buffer = (char *)malloc(buffSize * sizeof(char));
+	buffer = (char *)mallocC(buffSize * sizeof(char));
 	if (buffer == NULL) return false;
 	pBuffer = buffer;
 
@@ -272,8 +273,8 @@ void statsAvg(struct Stats *outStats, struct MPINode *node)
 	size_t recvCount = sendCount * node->numProc;
 
 	// Allocate buffers
-	sendBuff = (double *)malloc(sendCount * sizeof(double));
-	recvBuff = (double *)malloc(recvCount * sizeof(double));
+	sendBuff = (double *)mallocC(sendCount * sizeof(double));
+	recvBuff = (double *)mallocC(recvCount * sizeof(double));
 	recvP = recvBuff;
 
 	// Prepare send buffer

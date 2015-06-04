@@ -1,5 +1,6 @@
 #include "world.h"
 #include "list.h"
+#include "malloc.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -59,9 +60,9 @@ struct World *createWorld(wsize_t x, wsize_t y, unsigned char limits)
 	wsize_t i, j;
 
 	// Allocate memory
-	world = (struct World *) malloc(sizeof(struct World));
-	world->grid = (struct Cell ***)malloc(x * sizeof(struct Cell *));
-	grid = (struct Cell **)malloc(x * y * sizeof(struct Cell *));
+	world = (struct World *) mallocC(sizeof(struct World));
+	world->grid = (struct Cell ***)mallocC(x * sizeof(struct Cell *));
+	grid = (struct Cell **)mallocC(x * y * sizeof(struct Cell *));
 
 	if (limits) {
 		boundaryMaxSize = y * sizeof(wsize_t);
@@ -90,16 +91,16 @@ static struct Boundary *createBoundary()
 {
 	struct Boundary *boundary;
 
-	boundary = (struct Boundary *)malloc(sizeof(struct Boundary));
+	boundary = (struct Boundary *)mallocC(sizeof(struct Boundary));
 
 	boundary->boundaries[WB_TOP][TO_REVIVE] =
-		(wsize_t *)malloc(boundaryMaxSize);
+		(wsize_t *)mallocC(boundaryMaxSize);
 	boundary->boundaries[WB_TOP][TO_KILL] =
-		(wsize_t *)malloc(boundaryMaxSize);
+		(wsize_t *)mallocC(boundaryMaxSize);
 	boundary->boundaries[WB_BOTTOM][TO_REVIVE] =
-		(wsize_t *)malloc(boundaryMaxSize);
+		(wsize_t *)mallocC(boundaryMaxSize);
 	boundary->boundaries[WB_BOTTOM][TO_KILL] =
-		(wsize_t *)malloc(boundaryMaxSize);
+		(wsize_t *)mallocC(boundaryMaxSize);
 
 
 	boundary->boundariesSizes[WB_TOP][TO_REVIVE] = 0;
@@ -177,7 +178,7 @@ inline static struct Cell *newCell(wsize_t x, wsize_t y, unsigned char num_ref,
 {
 	struct Cell *cell;
 
-	cell = (struct Cell *)malloc(sizeof(struct Cell));
+	cell = (struct Cell *)mallocC(sizeof(struct Cell));
 	cell->x = x;
 	cell->y = y;
 	cell->num_ref = num_ref;
@@ -437,7 +438,7 @@ void addToList(struct Cell *cell, struct list_head *list)
 {
 	struct CellListNode *cellList;
 
-	cellList = (struct CellListNode *)malloc(sizeof(struct CellListNode));
+	cellList = (struct CellListNode *)mallocC(sizeof(struct CellListNode));
 	cellList->cell = cell;
 	list_add(&cellList->lh, list);
 }
@@ -449,7 +450,7 @@ void addToList_coords(wsize_t x, wsize_t y, bool alive, struct list_head *list,
 
 	toroidalCoords(&x, &y, world);
 
-	cellList = (struct CellListNode *)malloc(sizeof(struct CellListNode));
+	cellList = (struct CellListNode *)mallocC(sizeof(struct CellListNode));
 	cellList->cell = newCell(x, y, 0, alive);
 	list_add(&cellList->lh, list);
 }

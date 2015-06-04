@@ -1,5 +1,6 @@
 #include "stats.h"
 #include "io.h"
+#include "malloc.h"
 #include <stdlib.h>
 #include <omp.h>
 
@@ -18,8 +19,8 @@ struct Stats *createStats(unsigned long long int iterations, int nThreads)
 	int i;
 	struct Stats *stats;
 
-	stats = (struct Stats *)malloc(sizeof(struct Stats));
-	stats->threads = (double *)malloc(nThreads * sizeof(double));
+	stats = (struct Stats *)mallocC(sizeof(struct Stats));
+	stats->threads = (double *)mallocC(nThreads * sizeof(double));
 
 	stats->avgFactor = 1.0/(double)iterations;
 	stats->nThreads = nThreads;
@@ -52,7 +53,7 @@ bool saveStats(struct Stats *stats)
 
 	maxLineSize = STRLEN("            Thread9      \n") + DIGS;
 	maxBuffSize = (6 + stats->nThreads)*maxLineSize + 1;
-	buffer = (char *)malloc(maxBuffSize * sizeof(char));
+	buffer = (char *)mallocC(maxBuffSize * sizeof(char));
 	pBuffer = buffer;
 
 	written = snprintf(pBuffer, maxBuffSize,

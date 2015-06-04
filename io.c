@@ -1,4 +1,5 @@
 #include "io.h"
+#include "malloc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +28,7 @@ bool writeBuffer(char *buffer, size_t size, const char *dirName,
 	size_t routeLenght;
 
 	routeLenght = strlen(dirName) + strlen(filename) + 2;
-	route = (char *)malloc(routeLenght * sizeof(char));
+	route = (char *)mallocC(routeLenght * sizeof(char));
 
 	snprintf(route,  routeLenght, "%s/%s", dirName, filename);
 
@@ -62,7 +63,7 @@ static bool rmRDir(const char *dirName)
 		) continue;
 
 		nameSize = dirNameSize + strlen(entity->d_name) + 2;
-		filename = (char *)malloc(nameSize);
+		filename = (char *)mallocC(nameSize);
 		snprintf(filename, nameSize, "%s/%s", dirName, entity->d_name);
 
 		if (stat(filename, &attrib) == -1)
