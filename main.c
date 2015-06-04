@@ -39,6 +39,7 @@ int main(int argc, char *argv[])
 	statsAvg(avgStats, node);
 	if (getNodeId(node) == 0) {
 		saveStats(avgStats);
+		saveStatsGnuplot(avgStats);
 	}
 
 	freeStats(stats);
