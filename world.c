@@ -47,7 +47,7 @@ static void setNeighbor(wsize_t x, wsize_t y, unsigned bound,
 static void incRef(wsize_t x, wsize_t y, struct World *world);
 static void decRef(wsize_t x, wsize_t y, struct World *world);
 static void toroidalCoords(wsize_t *x, wsize_t *y, const struct World *world);
-static struct Boundary *createBoundary();
+static struct Boundary *createBoundary(void);
 static void freeBoundary(struct Boundary *boundary);
 static void addToBoundary(wsize_t y, enum WorldBound bound,
 	enum BoundaryType btype, struct Boundary *boundary);
@@ -66,8 +66,8 @@ struct World *createWorld(wsize_t x, wsize_t y, unsigned char limits)
 
 	if (limits) {
 		boundaryMaxSize = y * sizeof(wsize_t);
-		world->RXBoundary = createBoundary(boundaryMaxSize);
-		world->TXBoundary = createBoundary(boundaryMaxSize);
+		world->RXBoundary = createBoundary();
+		world->TXBoundary = createBoundary();
 	}
 
 	// Initialize pointers
@@ -414,19 +414,6 @@ inline bool isCellAlive_coord(wsize_t x, wsize_t y, const struct World *world)
 	cell = world->grid[x][y];
 
 	return cell == NULL? false : cell->alive;
-}
-
-enum WorldBound boundsCheck(wsize_t *x, wsize_t *y, const struct World *world)
-{
-	if (*x == 0) {
-		*x = world->x;
-		return WB_TOP;
-	} else if (*x == world->x-1) {
-		*x = -1;
-		return WB_BOTTOM;
-	}
-
-	return WB_NONE;
 }
 
 inline struct Cell *getCell(wsize_t x, wsize_t y, const struct World *world)
