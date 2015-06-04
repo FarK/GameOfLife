@@ -8,6 +8,6 @@
 // TOOD: Make it cross-platform
 bool createSubdir(const char *dirName);
 bool writeBuffer(char *buffer, size_t size, const char *dirName,
-	const char *filename);
+	const char *filename, const char *mode);
 
 #endif

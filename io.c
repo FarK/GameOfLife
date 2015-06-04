@@ -20,7 +20,7 @@ bool createSubdir(const char *dirName)
 }
 
 bool writeBuffer(char *buffer, size_t size, const char *dirName,
-	const char *filename)
+	const char *filename, const char *mode)
 {
 	FILE *file;
 	size_t written;
@@ -32,7 +32,7 @@ bool writeBuffer(char *buffer, size_t size, const char *dirName,
 
 	snprintf(route,  routeLenght, "%s/%s", dirName, filename);
 
-	file = fopen(route, "w");
+	file = fopen(route, mode);
 	if (file == NULL) return false;
 
 	written = fwrite(buffer, sizeof(char), size, file);

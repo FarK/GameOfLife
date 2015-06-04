@@ -247,7 +247,7 @@ bool write(struct MPINode *node)
 
 	// Write file
 	snprintf(filename, 3+1, "%03Ld", node->itCounter);
-	ret = writeBuffer(buffer, buffSize, node->dirName, filename);
+	ret = writeBuffer(buffer, buffSize, node->dirName, filename, "w");
 
 	free(buffer);
 
