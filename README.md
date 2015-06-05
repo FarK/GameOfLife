@@ -19,7 +19,7 @@ it dependent linearly on number of alive cells. If we have a number of alive
 cells close to the world size, we should obtain a process time slightly higher
 to an array based implementation approach.
 
-[Structure scheme](doc/worldStructure.png?raw=true "World structure")
+![Structure scheme](doc/worldStructure.png?raw=true "World structure")
 
 Thread parallelization
 ----------------------
