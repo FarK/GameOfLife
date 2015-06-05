@@ -50,7 +50,7 @@ generate a record of whole execution. Later, you can view this record with the
 * '+' : increment velocity
 * '-' : decrement velocity
 * 'b' : backward
-* <other key> : forward
+* < other key > : forward
 
 Dependences
 -----------
