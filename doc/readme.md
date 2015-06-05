@@ -22,6 +22,6 @@ Profiling
 The communication represent a significant proportion of the total iteration
 time. And the parallelization with OpenMP have a slight cost too.
 
-![1proc1thread](p1t1.png "1 proccess, 1 thread)
-![1proc2thread](p1t2.png "1 proccess, 2 threads)
-![2proc1thread](p2t1.png "2 proccesses, 1 thread)
+![1proc1thread](p1t1.png "1 proccess, 1 thread")
+![1proc2thread](p1t2.png "1 proccess, 2 threads")
+![2proc1thread](p2t1.png "2 proccesses, 1 thread")

@@ -67,4 +67,4 @@ Results
 These tests were executed on a machine with an Intel Pentium Dual Core at 2 GHz
 with 4GB of RAM.
 
-You can view all results [here](doc/results.md).
+You can view all results [here](doc/readme.md).
