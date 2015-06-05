@@ -151,7 +151,7 @@ void run(struct MPINode *node)
 {
 	double pTime, itTime;
 
-	pTime = startMeasurement();
+	pTime = omp_get_wtime();
 
 	for (
 		node->itCounter = 0;
@@ -167,7 +167,7 @@ void run(struct MPINode *node)
 		if (node->params->record && !write(node)) treadIOError(node);
 	}
 
-	endMeasurement(pTime, total, node->stats);
+	node->stats->total = omp_get_wtime() - pTime;
 }
 
 inline static void iterate(struct MPINode *node)
