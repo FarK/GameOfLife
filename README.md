@@ -19,6 +19,8 @@ it dependent linearly on number of alive cells. If we have a number of alive
 cells close to the world size, we should obtain a process time slightly higher
 to an array based implementation approach.
 
+[Structure scheme](doc/worldStructure.png?raw=true "World structure")
+
 Thread parallelization
 ----------------------
 For thread parallelization each thread processes an equal portion of the linked
@@ -57,3 +59,12 @@ Dependences
 * openmpi v1.6.5
 * openmp
 * gnuplot [for generate graphics]
+
+------
+
+Results
+-------
+These tests were executed on a machine with an Intel Pentium Dual Core at 2 GHz
+with 4GB of RAM.
+
+You can view all results [here](doc/results.md).
