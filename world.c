@@ -251,12 +251,12 @@ void reviveCell(wsize_t x, wsize_t y, struct World *world)
 
 	if (world->limits) {
 		if (x == 0) {
-			if (cell != NULL && !cell->alive)
+			if (cell == NULL || !cell->alive)
 				addToBoundary(y, WB_TOP, TO_REVIVE,
 						world->TXBoundary);
 			bound = NB_TOP | NB_MID;
 		} else if (x == world->x-1) {
-			if (cell != NULL && !cell->alive)
+			if (cell == NULL || !cell->alive)
 				addToBoundary(y, WB_BOTTOM, TO_REVIVE,
 						world->TXBoundary);
 			bound = NB_BOT | NB_MID;
@@ -291,14 +291,10 @@ void killCell(wsize_t x, wsize_t y, struct World *world)
 
 	if (world->limits) {
 		if (x == 0) {
-			if (cell == NULL || !cell->alive)
-				addToBoundary(y, WB_TOP, TO_KILL,
-						world->TXBoundary);
+			addToBoundary(y, WB_TOP, TO_KILL, world->TXBoundary);
 			bound = NB_TOP | NB_MID;
 		} else if (x == world->x-1) {
-			if (cell == NULL || !cell->alive)
-				addToBoundary(y, WB_BOTTOM, TO_KILL,
-						world->TXBoundary);
+			addToBoundary(y, WB_BOTTOM, TO_KILL, world->TXBoundary);
 			bound = NB_BOT | NB_MID;
 		}
 	}
