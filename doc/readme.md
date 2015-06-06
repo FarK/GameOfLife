@@ -15,7 +15,7 @@ Iterations VS time
 ------------------
 The algorithm scales linearly.
 
-![Iterations](cells_size.png "Iterations")
+![Iterations](iterations.png "Iterations")
 
 Profiling
 ---------
