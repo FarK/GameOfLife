@@ -92,7 +92,7 @@ bool processArgs(struct Parameters *params, int argc, char *argv[])
 		{"size",       required_argument, NULL,    's'},
 		{"threads",    required_argument, NULL,    't'},
 		{"iterations", required_argument, NULL,    'i'},
-		{"cells",      optional_argument, NULL,    'c'},
+		{"cells",      required_argument, NULL,    'c'},
 		{"record",     no_argument,       &record,  1 },
 		{0, 0, 0, 0}
 	};
@@ -109,7 +109,7 @@ bool processArgs(struct Parameters *params, int argc, char *argv[])
 	params->cells = 0;
 
 	while(1) {
-		opt = getopt_long(argc, argv, "s:t:i:c::r", options, &optIdx);
+		opt = getopt_long(argc, argv, "s:t:i:c:r", options, &optIdx);
 		if (opt == -1) break;
 
 		switch (opt) {
